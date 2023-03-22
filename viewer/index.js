@@ -1263,5 +1263,87 @@ function init(){
   })
     .setLatLng(map.getCenter())
     .setContent('<div id="popGraph">Loading graph</div>');
+  
+
+    //Login section
+    L.Control.Login = L.Control.extend({
+      options: {
+        position: 'topright',
+      },
+      onAdd: function(map) {
+        this._map = map;
+        var container;
+        container = this._container = L.DomUtil.create('div', 'login');
+        container.id='div-login';
+        this.containerNoUser = L.DomUtil.create('div','', container);
+        this.containerUser = L.DomUtil.create('div','', container);
+        this.containerUser.innerHTML='<a class="userName">UserName<a/><div class="commands"><br/><a onclick=javascript:keycloak.logout()>Logout<a/><br/><a target="_blank" class="userInfo">User Info</a></div>';
+        this.containerUser.hidden =true;
+        this.containerUser.getElementsByClassName("commands")[0].hidden=true
+        
+        var link = L.DomUtil.create("a", "uiElement label", this.containerNoUser);
+        link.textContent = "Log In";
+        link.onclick=function(){
+          keycloak.login();
+        }
+        container.onmouseover=function(){
+          L.DomUtil.addClass(container,'login-mouse')
+          container.getElementsByClassName("commands")[0].hidden=false
+        }
+        container.onmouseout=function(){
+          L.DomUtil.removeClass(container,'login-mouse')
+          container.getElementsByClassName("commands")[0].hidden=true
+        }
+        if(keycloak && keycloak.authenticated==true){
+          container.setUser(loggedUser);
+        }
+        return container;
+      },
+      onRemove(map){
+      },
+      setUser(user){
+        var userName
+        if(user.given_name == undefined ||  "" == user.given_name.trim()){
+          userName=user.preferred_username;
+        }else{
+          userName=user.given_name + " " + user.family_name;
+        }
+        this.containerUser.getElementsByClassName("userName")[0].text=userName;
+        controlLogin.containerUser.getElementsByClassName("userInfo")[0].href=keycloak.createAccountUrl();
+        this.containerUser.hidden=false;
+        this.containerNoUser.hidden=true;
+        
+      }
+    });
+    controlLogin = new L.Control.Login();
+    controlLogin.addTo(map);
+    initKeycloak();
 }
 init();
+
+var keycloak
+var loggedUser
+function initKeycloak() {
+  keycloak = new Keycloak({
+    url: 'http://10.42.0.177:8080/',
+    realm: 'lcsc',
+    clientId: 'mapweb',
+    enableLogging:true,
+  });
+  keycloak.init({onLoad: 'check-sso',
+      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html'
+  }).then(function(authenticated) {
+      if(authenticated){
+        keycloak.loadUserInfo().then(function(user){
+          loggedUser=user;
+          controlLogin.setUser(user);
+          console.log("Authenticated")
+        })
+      }else{
+        console.warn("Not Authenticated")
+      }
+  }).catch(function(e) {
+      console.error(e);
+      alert('failed to initialize');
+  });
+}

@@ -36,3 +36,4 @@ vignettes/*.pdf
 rsconnect/
 
 # man/
+viewer/times.js

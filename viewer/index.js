@@ -1291,7 +1291,11 @@ function init(){
           keycloak.logout();
         };
         this._btnInfo._label.text="User Info"
-        this._btnInfo._label.target="_blank"
+        //this._btnInfo._label.target="_blank"
+        this._btnInfo._container.onclick=function(){
+          window.open(keycloak.createAccountUrl(),'_blank');
+        }
+        
         this.containerUser.hidden =true;
         btns.hidden=true
         
@@ -1324,7 +1328,7 @@ function init(){
           userName=user.given_name + " " + user.family_name;
         }
         this.containerUser.getElementsByClassName("userName")[0].text=userName;
-        this._btnInfo._label.href=keycloak.createAccountUrl();
+        //this._btnInfo._label.href=keycloak.createAccountUrl();
         this.containerUser.hidden=false;
         this.containerNoUser._container.hidden=true;
         

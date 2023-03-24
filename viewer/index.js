@@ -1325,7 +1325,7 @@ var keycloak
 var loggedUser
 function initKeycloak() {
   keycloak = new Keycloak({
-    url: 'https:/yesa.eead.csic.es/iam/',
+    url: 'https://yesa.eead.csic.es/iam/',
     realm: 'lcsc',
     clientId: 'mapweb',
     enableLogging:true,

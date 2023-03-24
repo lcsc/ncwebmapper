@@ -1325,13 +1325,13 @@ var keycloak
 var loggedUser
 function initKeycloak() {
   keycloak = new Keycloak({
-    url: 'http://10.42.0.177:8080/',
+    url: 'https:/yesa.eead.csic.es/iam/',
     realm: 'lcsc',
     clientId: 'mapweb',
     enableLogging:true,
   });
   keycloak.init({onLoad: 'check-sso',
-      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html'
+      silentCheckSsoRedirectUri: window.location.origin + window.location.pathname + 'silent-check-sso.html'
   }).then(function(authenticated) {
       if(authenticated){
         keycloak.loadUserInfo().then(function(user){

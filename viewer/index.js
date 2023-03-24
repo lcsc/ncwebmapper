@@ -1275,15 +1275,29 @@ function init(){
         var container;
         container = this._container = L.DomUtil.create('div', 'login');
         container.id='div-login';
-        this.containerNoUser = L.DomUtil.create('div','', container);
+        this.containerNoUser = createButton(container)
+        this.containerNoUser._label.text="Login";
         this.containerUser = L.DomUtil.create('div','', container);
-        this.containerUser.innerHTML='<a class="userName">UserName<a/><div class="commands"><br/><a onclick=javascript:keycloak.logout()>Logout<a/><br/><a target="_blank" class="userInfo">User Info</a></div>';
-        this.containerUser.hidden =true;
-        this.containerUser.getElementsByClassName("commands")[0].hidden=true
         
-        var link = L.DomUtil.create("a", "uiElement label", this.containerNoUser);
+        
+        //this.containerUser.innerHTML='<a class="userName">UserName<a/><div class="commands"><br/><a onclick=javascript:keycloak.logout()>Logout<a/><br/><a target="_blank" class="userInfo">User Info</a></div>';
+        L.DomUtil.create("a", "userName", this.containerUser).text="User";
+        var btns= L.DomUtil.create("div","commands",this.containerUser);
+        this._btnLogout=createButton(btns);
+        this._btnInfo=createButton(btns);
+
+        this._btnLogout._label.text="Logout";
+        this._btnLogout._container.onclick=function(){
+          keycloak.logout();
+        };
+        this._btnInfo._label.text="User Info"
+        this._btnInfo._label.target="_blank"
+        this.containerUser.hidden =true;
+        btns.hidden=true
+        
+        var link = this.containerNoUser._label;
         link.textContent = "Log In";
-        link.onclick=function(){
+        this.containerNoUser._container.onclick=function(){
           keycloak.login();
         }
         container.onmouseover=function(){
@@ -1297,6 +1311,7 @@ function init(){
         if(keycloak && keycloak.authenticated==true){
           container.setUser(loggedUser);
         }
+        container.hidden=true;
         return container;
       },
       onRemove(map){
@@ -1309,9 +1324,9 @@ function init(){
           userName=user.given_name + " " + user.family_name;
         }
         this.containerUser.getElementsByClassName("userName")[0].text=userName;
-        controlLogin.containerUser.getElementsByClassName("userInfo")[0].href=keycloak.createAccountUrl();
+        this._btnInfo._label.href=keycloak.createAccountUrl();
         this.containerUser.hidden=false;
-        this.containerNoUser.hidden=true;
+        this.containerNoUser._container.hidden=true;
         
       }
     });
@@ -1342,8 +1357,23 @@ function initKeycloak() {
       }else{
         console.warn("Not Authenticated")
       }
+      controlLogin._container.hidden=false;
   }).catch(function(e) {
       console.error(e);
       alert('failed to initialize');
   });
+}
+
+function createButton(parent){
+  var ret={};
+  ret._parent = parent;
+  ret._container=  L.DomUtil.create('div','btn', parent);
+  ret._label=L.DomUtil.create("a", "uiElement label", ret._container);
+  ret._container.onmouseover=function(){
+    L.DomUtil.addClass(ret._container,'mouseover')
+  };
+  ret._container.onmouseout=function(){
+    L.DomUtil.removeClass(ret._container,'mouseover')
+  }
+  return ret;
 }

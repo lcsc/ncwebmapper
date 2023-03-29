@@ -1337,6 +1337,62 @@ function init(){
     controlLogin = new L.Control.Login();
     controlLogin.addTo(map);
     initKeycloak();
+
+
+    L.Control.MapFav = L.Control.extend({ options: {
+      position: 'bottomleft',
+    },
+    onAdd: function(map) {
+      this._map = map;
+      var container;
+      container = this._container = L.DomUtil.create('div', 'login');
+      container.onmouseover=function(){
+        L.DomUtil.addClass(container,'login-mouse')
+      }
+      container.onmouseout=function(){
+        L.DomUtil.removeClass(container,'login-mouse')
+      }
+
+      this._btnInfo=createButton(container);
+      this._btnInfo._container.onclick=function(){
+        alert('Info');
+      };
+      this._btnInfo._label.text="API Info"
+
+      this._btnSave=createButton(container);
+      this._btnSave._container.onclick=function(){
+        //alert('Save');
+        apiPutUserMap({
+          "name":"User",
+            "center":map.getCenter(),
+            "zoom":map.getZoom()
+          },
+          function(e){
+            alert("Saved");
+          });
+      };
+      this._btnSave._label.text="Save Map"
+
+      this._btnLoad=createButton(container);
+      this._btnLoad._container.onclick=function(){
+        //alert('Load');
+       // map.flyTo({ "lat": 39.9843448641016, "lng": -2.60223372353378 },6);
+        apiGetUserMap(function(e){
+          console.log(e);
+          data= JSON.parse(e);
+          map.flyTo(data.center,data.zoom);
+        });
+      };
+      this._btnLoad._label.text="Load Map"
+
+      return container;
+    },
+    onRemove(map){
+    },
+    });
+
+    controlMapFav = new L.Control.MapFav();
+    controlMapFav.addTo(map);
 }
 init();
 
@@ -1380,4 +1436,45 @@ function createButton(parent){
     L.DomUtil.removeClass(ret._container,'mouseover')
   }
   return ret;
+}
+
+const apiBase="/node/api/";
+
+function apiGetUserMap(sucessCb){
+  var request = new XMLHttpRequest();
+
+  onerror = function (e) {
+    console.error("Problema Accediendo al API.", e);
+  }
+  request.onerror = onerror;
+  request.onload = function(e){
+    if(request.status==200){
+      sucessCb(request.response);
+    }
+    console.log("getUserMap response: "+request.status)
+  };
+  url = window.location.origin + apiBase +"user/map";
+  asynchronous = true;
+  request.open('GET', url, asynchronous);
+  request.send(null);
+}
+
+function apiPutUserMap(position,sucessCb){
+  var request = new XMLHttpRequest();
+
+  onerror = function (e) {
+    console.error("Problema Accediendo al API.", e);
+  }
+  request.onerror = onerror;
+  request.onload = function(e){
+    if(request.status==200){
+      sucessCb(request.response);
+    }
+    console.log("getUserMap response: "+request.status)
+  };
+  url = window.location.origin + apiBase +"user/map";
+  asynchronous = true;
+  request.open('PUT', url, asynchronous);
+  request.setRequestHeader('Content-Type', 'application/json');
+  request.send(JSON.stringify(position));
 }

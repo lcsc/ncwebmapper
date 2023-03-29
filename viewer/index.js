@@ -1355,13 +1355,19 @@ function init(){
 
       this._btnInfo=createButton(container);
       this._btnInfo._container.onclick=function(){
-        alert('Info');
+        apiGetApiInfo(function(e){
+          data = JSON.parse(e);
+          var popup = L.popup()
+            .setLatLng(map.getCenter())
+            .setContent('<b>API: </b>'+data.name+'<br /><b>Language: </b>'+data.language+"<br /><b>Version: </b>"+data.version)
+            .openOn(map);
+
+        });
       };
       this._btnInfo._label.text="API Info"
 
       this._btnSave=createButton(container);
       this._btnSave._container.onclick=function(){
-        //alert('Save');
         apiPutUserMap({
           "name":"User",
             "center":map.getCenter(),
@@ -1375,8 +1381,6 @@ function init(){
 
       this._btnLoad=createButton(container);
       this._btnLoad._container.onclick=function(){
-        //alert('Load');
-       // map.flyTo({ "lat": 39.9843448641016, "lng": -2.60223372353378 },6);
         apiGetUserMap(function(e){
           console.log(e);
           data= JSON.parse(e);
@@ -1477,4 +1481,23 @@ function apiPutUserMap(position,sucessCb){
   request.open('PUT', url, asynchronous);
   request.setRequestHeader('Content-Type', 'application/json');
   request.send(JSON.stringify(position));
+}
+
+function apiGetApiInfo(sucessCb){
+  var request = new XMLHttpRequest();
+
+  onerror = function (e) {
+    console.error("Problema Accediendo al API.", e);
+  }
+  request.onerror = onerror;
+  request.onload = function(e){
+    if(request.status==200){
+      sucessCb(request.response);
+    }
+    console.log("GetApiInfo response: "+request.status)
+  };
+  url = window.location.origin + apiBase +"info";
+  asynchronous = true;
+  request.open('GET', url, asynchronous);
+  request.send(null);
 }

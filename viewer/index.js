@@ -1368,6 +1368,10 @@ function init(){
 
       this._btnSave=createButton(container);
       this._btnSave._container.onclick=function(){
+        if(!keycloak || !keycloak.authenticated){
+          alert("You must be logged in to save your current coordinates");
+          return;
+        }
         apiPutUserMap({
           "name":"User",
             "center":map.getCenter(),
@@ -1381,6 +1385,10 @@ function init(){
 
       this._btnLoad=createButton(container);
       this._btnLoad._container.onclick=function(){
+        if(!keycloak || !keycloak.authenticated){
+          alert("You must be logged in to load your saved coordinates");
+          return;
+        }
         apiGetUserMap(function(e){
           console.log(e);
           data= JSON.parse(e);
@@ -1460,6 +1468,7 @@ function apiGetUserMap(sucessCb){
   url = window.location.origin + apiBase +"user/map";
   asynchronous = true;
   request.open('GET', url, asynchronous);
+  request.setRequestHeader('Authorization', 'Bearer '+keycloak.token);
   request.send(null);
 }
 
@@ -1480,6 +1489,7 @@ function apiPutUserMap(position,sucessCb){
   asynchronous = true;
   request.open('PUT', url, asynchronous);
   request.setRequestHeader('Content-Type', 'application/json');
+  request.setRequestHeader('Authorization', 'Bearer '+keycloak.token);
   request.send(JSON.stringify(position));
 }
 

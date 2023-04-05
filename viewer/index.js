@@ -94,6 +94,42 @@ if(typeof palrgb === "undefined"){
 // Map config
 var aux;
 
+
+var keycloak
+var loggedUser
+function initKeycloak() {
+  keycloak = new Keycloak({
+    //url: window.location.origin +'/iam/',
+    url: 'https://yesa.eead.csic.es/iam/',
+    realm: 'lcsc',
+    clientId: 'mapweb',
+    enableLogging:true,
+    responseMode:'query',
+  });
+  keycloak.init({onLoad: 'check-sso',
+      silentCheckSsoRedirectUri: window.location.origin + window.location.pathname + 'silent-check-sso.html',
+      silentCheckSsoFallback: false
+  }).then(function(authenticated) {
+      init();
+      if(authenticated){
+        keycloak.loadUserInfo().then(function(user){
+          loggedUser=user;
+          if(controlLogin) controlLogin.setUser(user);
+          console.log("Authenticated")
+        })
+      }else{
+        console.warn("Not Authenticated")
+      }
+      controlLogin._container.hidden=false;
+  }).catch(function(e) {
+      console.error(e);
+      //alert('failed to initialize');
+      init();//Without login
+  });
+}
+initKeycloak();
+
+
 //////////////////////////PARÁMETROS//////////////////////////
 
 /* Actualiza la URL con los parámetros que definen el mapa a cargar */
@@ -132,7 +168,7 @@ if(Object.keys(varTitle).length>0){
 }
 var selectName = varName;
 var timeI = getTimeI();
-updateURL();
+//updateURL();
 
 ////////////////////////////////////////////////////
 
@@ -1312,8 +1348,8 @@ function init(){
           L.DomUtil.removeClass(container,'login-mouse')
           container.getElementsByClassName("commands")[0].hidden=true
         }
-        if(keycloak && keycloak.authenticated==true){
-          container.setUser(loggedUser);
+        if(keycloak && keycloak.authenticated==true && loggedUser){
+          this.setUser(loggedUser);
         }
         container.hidden=true;
         return container;
@@ -1336,37 +1372,10 @@ function init(){
     });
     controlLogin = new L.Control.Login();
     controlLogin.addTo(map);
-    initKeycloak();
+    //initKeycloak();
 }
-init();
+//init();
 
-var keycloak
-var loggedUser
-function initKeycloak() {
-  keycloak = new Keycloak({
-    url: 'https://yesa.eead.csic.es/iam/',
-    realm: 'lcsc',
-    clientId: 'mapweb',
-    enableLogging:true,
-  });
-  keycloak.init({onLoad: 'check-sso',
-      silentCheckSsoRedirectUri: window.location.origin + window.location.pathname + 'silent-check-sso.html'
-  }).then(function(authenticated) {
-      if(authenticated){
-        keycloak.loadUserInfo().then(function(user){
-          loggedUser=user;
-          controlLogin.setUser(user);
-          console.log("Authenticated")
-        })
-      }else{
-        console.warn("Not Authenticated")
-      }
-      controlLogin._container.hidden=false;
-  }).catch(function(e) {
-      console.error(e);
-      alert('failed to initialize');
-  });
-}
 
 function createButton(parent){
   var ret={};

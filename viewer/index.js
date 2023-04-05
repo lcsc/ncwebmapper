@@ -1372,7 +1372,7 @@ function init(){
     });
     controlLogin = new L.Control.Login();
     controlLogin.addTo(map);
-    initKeycloak();
+    //initKeycloak();
 
 
     L.Control.MapFav = L.Control.extend({ options: {

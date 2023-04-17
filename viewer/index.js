@@ -1022,7 +1022,8 @@ function init(){
           controlCoordinates._update({latlng: latlng});
         }
       }
-      coor = extractCoorZoom(latlng, levelcsv, launchPop, true)      
+      //coor = extractCoorZoom(latlng, levelcsv, launchPop, true)      
+      coor = extractCoorZoom(latlng, mapMaxZoom+4, launchPop, true)      
   }
 
   var returnClickPopUp = function(nothing, options){

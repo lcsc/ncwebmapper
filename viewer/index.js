@@ -108,7 +108,8 @@ function initKeycloak() {
   });
   keycloak.init({onLoad: 'check-sso',
       silentCheckSsoRedirectUri: window.location.origin + window.location.pathname + 'silent-check-sso.html',
-      silentCheckSsoFallback: false
+      silentCheckSsoFallback: false,
+       redirectUri: window.location.origin + window.location.pathname
   }).then(function(authenticated) {
       init();
       if(authenticated){

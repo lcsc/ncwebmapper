@@ -1374,6 +1374,74 @@ function init(){
     controlLogin = new L.Control.Login();
     controlLogin.addTo(map);
     //initKeycloak();
+
+
+    L.Control.MapFav = L.Control.extend({ options: {
+      position: 'bottomleft',
+    },
+    onAdd: function(map) {
+      this._map = map;
+      var container;
+      container = this._container = L.DomUtil.create('div', 'login');
+      container.onmouseover=function(){
+        L.DomUtil.addClass(container,'login-mouse')
+      }
+      container.onmouseout=function(){
+        L.DomUtil.removeClass(container,'login-mouse')
+      }
+
+      this._btnInfo=createButton(container);
+      this._btnInfo._container.onclick=function(){
+        apiGetApiInfo(function(e){
+          data = JSON.parse(e);
+          var popup = L.popup()
+            .setLatLng(map.getCenter())
+            .setContent('<b>API: </b>'+data.name+'<br /><b>Language: </b>'+data.language+"<br /><b>Version: </b>"+data.version)
+            .openOn(map);
+
+        });
+      };
+      this._btnInfo._label.text="API Info"
+
+      this._btnSave=createButton(container);
+      this._btnSave._container.onclick=function(){
+        if(!keycloak || !keycloak.authenticated){
+          alert("You must be logged in to save your current coordinates");
+          return;
+        }
+        apiPutUserMap({
+          "name":"User",
+            "center":map.getCenter(),
+            "zoom":map.getZoom()
+          },
+          function(e){
+            alert("Saved");
+          });
+      };
+      this._btnSave._label.text="Save Map"
+
+      this._btnLoad=createButton(container);
+      this._btnLoad._container.onclick=function(){
+        if(!keycloak || !keycloak.authenticated){
+          alert("You must be logged in to load your saved coordinates");
+          return;
+        }
+        apiGetUserMap(function(e){
+          console.log(e);
+          data= JSON.parse(e);
+          map.flyTo(data.center,data.zoom);
+        });
+      };
+      this._btnLoad._label.text="Load Map"
+
+      return container;
+    },
+    onRemove(map){
+    },
+    });
+
+    controlMapFav = new L.Control.MapFav();
+    controlMapFav.addTo(map);
 }
 //init();
 
@@ -1390,4 +1458,66 @@ function createButton(parent){
     L.DomUtil.removeClass(ret._container,'mouseover')
   }
   return ret;
+}
+
+const apiBase="/node/api/";
+
+function apiGetUserMap(sucessCb){
+  var request = new XMLHttpRequest();
+
+  onerror = function (e) {
+    console.error("Problema Accediendo al API.", e);
+  }
+  request.onerror = onerror;
+  request.onload = function(e){
+    if(request.status==200){
+      sucessCb(request.response);
+    }
+    console.log("getUserMap response: "+request.status)
+  };
+  url = window.location.origin + apiBase +"user/map";
+  asynchronous = true;
+  request.open('GET', url, asynchronous);
+  request.setRequestHeader('Authorization', 'Bearer '+keycloak.token);
+  request.send(null);
+}
+
+function apiPutUserMap(position,sucessCb){
+  var request = new XMLHttpRequest();
+
+  onerror = function (e) {
+    console.error("Problema Accediendo al API.", e);
+  }
+  request.onerror = onerror;
+  request.onload = function(e){
+    if(request.status==200){
+      sucessCb(request.response);
+    }
+    console.log("getUserMap response: "+request.status)
+  };
+  url = window.location.origin + apiBase +"user/map";
+  asynchronous = true;
+  request.open('PUT', url, asynchronous);
+  request.setRequestHeader('Content-Type', 'application/json');
+  request.setRequestHeader('Authorization', 'Bearer '+keycloak.token);
+  request.send(JSON.stringify(position));
+}
+
+function apiGetApiInfo(sucessCb){
+  var request = new XMLHttpRequest();
+
+  onerror = function (e) {
+    console.error("Problema Accediendo al API.", e);
+  }
+  request.onerror = onerror;
+  request.onload = function(e){
+    if(request.status==200){
+      sucessCb(request.response);
+    }
+    console.log("GetApiInfo response: "+request.status)
+  };
+  url = window.location.origin + apiBase +"info";
+  asynchronous = true;
+  request.open('GET', url, asynchronous);
+  request.send(null);
 }

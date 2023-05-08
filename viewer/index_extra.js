@@ -126,7 +126,7 @@ function downloadNowButton() {
         var link = L.DomUtil.create("a", "uiElement label", container);
         link.textContent = 'Download last NC';  
         if(keycloak.authenticated){
-          link.href = "nc/" + "spei_" + lastTime.substr(0, 4) + "_" + lastTime.substr(5, 2) + "_" + lastTime.substr(8, 2) + "_now" + "." + extensionDownloadFile+"?access_token="+keycloak.token;
+          link.href = "nc/full/" + varName + "." + extensionDownloadFile+"?access_token="+keycloak.token;
         }else{ 
           link.onclick=function(){
             modal.open();

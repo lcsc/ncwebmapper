@@ -124,13 +124,12 @@ function downloadNowButton() {
       var container = this._container = L.DomUtil.create('div', 'map_name');
       if(varName!=null & varName!="NaN"){
         var link = L.DomUtil.create("a", "uiElement label", container);
+        link.textContent = 'Download last NC';  
         if(keycloak.authenticated){
           link.href = "nc/" + "spei_" + lastTime.substr(0, 4) + "_" + lastTime.substr(5, 2) + "_" + lastTime.substr(8, 2) + "_now" + "." + extensionDownloadFile+"?access_token="+keycloak.token;
-          link.textContent = 'Download last NC';  
-        }else{
-          link.textContent = 'Log in to get last NC';  
+        }else{ 
           link.onclick=function(){
-            keycloak.login();
+            modal.open();
           }
         }
       }
@@ -162,3 +161,36 @@ function addLogos(superdiv){
 
 document.getElementById("description").content = "This drought monitor provides near real-time information about drought conditions in regions where corn, wheat, barley, soybeans and cotton are grown with a 0.5 degrees spatial resolution and a weekly time resolution. SPEI time-scales between 0.5 and 48 months are provided from 1979.";
 
+var modal = new tingle.modal({
+  footer: true,
+  stickyFooter: false,
+  closeMethods: ['overlay', 'button', 'escape'],
+  closeLabel: "Close",
+  cssClass: ['custom-class-1', 'custom-class-2'],
+  onOpen: function() {
+      console.log('modal open');
+  },
+  onClose: function() {
+      console.log('modal closed');
+  },
+  beforeClose: function() {
+      // here's goes some logic
+      // e.g. save content before closing the modal
+      return true; // close the modal
+      return false; // nothing happens
+  }
+});
+
+modal.setContent('<div class="modal-header"><h1>Download last NC</h1></div><div class="modal-content"><p>The last four weeks are restricted to Licensed Users.</p><p>If you are a Licensed User please login to be able to download full database</p>'+
+'<p>To request access you can register on the login page or request to the administrators of LCSC</p></div>');
+modal.addFooterBtn('Login', 'tingle-btn tingle-btn--default tingle-btn--pull-right', function() {
+  modal.close();
+  keycloak.login();
+});
+modal.addFooterBtn('Download Current', 'tingle-btn tingle-btn--primary tingle-btn--pull-right', function() {
+  modal.close();
+  window.controlDownload._container.getElementsByTagName('a')[0].click()
+});
+modal.addFooterBtn('Cancel', 'tingle-btn tingle-btn--danger tingle-btn--pull-left', function() {
+  modal.close();
+});

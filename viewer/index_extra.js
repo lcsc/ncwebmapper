@@ -187,10 +187,10 @@ modal.addFooterBtn('Login', 'tingle-btn tingle-btn--default tingle-btn--pull-rig
   modal.close();
   keycloak.login();
 });
-modal.addFooterBtn('Download Current', 'tingle-btn tingle-btn--primary tingle-btn--pull-right', function() {
+/*modal.addFooterBtn('Download Current', 'tingle-btn tingle-btn--primary tingle-btn--pull-right', function() {
   modal.close();
   window.controlDownload._container.getElementsByTagName('a')[0].click()
-});
+});*/
 modal.addFooterBtn('Cancel', 'tingle-btn tingle-btn--danger tingle-btn--pull-left', function() {
   modal.close();
 });

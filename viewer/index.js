@@ -109,7 +109,7 @@ function initKeycloak() {
 
   keycloak.onTokenExpired=function(){
     console.warn("Token Expired");
-    alert("Debug Token Expired");
+    //alert("Debug Token Expired");
   }
 
   keycloak.init({onLoad: 'check-sso',

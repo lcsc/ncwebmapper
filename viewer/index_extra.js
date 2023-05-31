@@ -113,6 +113,14 @@ topTitle.onAdd = function (map) {
   return superdiv;
 };
 
+/*
+ if(varName!=null & varName!="NaN"){
+        var link = L.DomUtil.create("a", "uiElement label", container);
+        link.href =  "nc/" + "spei_" + lastTime.substr(0, 4) + "_" + lastTime.substr(5, 2) + "_" + lastTime.substr(8, 2) + "_now" + "." + extensionDownloadFile;
+        link.textContent = 'Download last NC';
+      }
+*/
+
 function downloadNowButton() {
   L.Control.Download = L.Control.extend({
     options: {
@@ -126,7 +134,9 @@ function downloadNowButton() {
         var link = L.DomUtil.create("a", "uiElement label", container);
         link.textContent = 'Download last NC';  
         if(keycloak.authenticated){
-          link.href = "nc/full/" + varName + "." + extensionDownloadFile+"?access_token="+keycloak.token;
+          let filename="spei_" + lastTime.substr(0, 4) + "_" + lastTime.substr(5, 2) + "_" + lastTime.substr(8, 2) + "_now";
+          //link.href = "nc/full/" + varName + "." + extensionDownloadFile+"?access_token="+keycloak.token;
+          link.href = "nc/full/" + filename + "." + extensionDownloadFile+"?access_token="+keycloak.token;
         }else{ 
           link.onclick=function(){
             modal.open();

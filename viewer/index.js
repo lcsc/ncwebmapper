@@ -106,6 +106,12 @@ function initKeycloak() {
     enableLogging:true,
     responseMode:'query',
   });
+
+  keycloak.onTokenExpired=function(){
+    console.warn("Token Expired");
+    alert("Debug Token Expired");
+  }
+
   keycloak.init({onLoad: 'check-sso',
       silentCheckSsoRedirectUri: window.location.origin + window.location.pathname + 'silent-check-sso.html',
       silentCheckSsoFallback: false,
@@ -117,6 +123,7 @@ function initKeycloak() {
           loggedUser=user;
           if(controlLogin) controlLogin.setUser(user);
           console.log("Authenticated")
+
         })
       }else{
         console.warn("Not Authenticated")

@@ -121,6 +121,34 @@ topTitle.onAdd = function (map) {
       }
 */
 
+
+var forceUpdate=false;
+var requested=false;
+function checkToken(){
+  let link=this;
+  if(!keycloak.authenticated){
+    modal.open();
+    return false;
+  }
+
+  if(keycloak.isTokenExpired() || forceUpdate && !requested){
+    requested=true;
+    keycloak.updateToken().then(function(refreshed) {
+      let dst= link.getAttribute("data")
+      link.href = dst+"?access_token="+keycloak.token;
+      link.click();
+      requested=false;
+  }).catch(function() {
+      requested=false;
+      alert('Failed to refresh the token, or the session has expired');
+  });
+    return false;
+  }
+  let dst= link.getAttribute("data")
+  link.href = dst+"?access_token="+keycloak.token;
+  return true;
+}
+
 function downloadNowButton() {
   L.Control.Download = L.Control.extend({
     options: {
@@ -136,7 +164,9 @@ function downloadNowButton() {
         if(keycloak.authenticated){
           let filename="spei_" + lastTime.substr(0, 4) + "_" + lastTime.substr(5, 2) + "_" + lastTime.substr(8, 2) + "_now";
           //link.href = "nc/full/" + varName + "." + extensionDownloadFile+"?access_token="+keycloak.token;
-          link.href = "nc/full/" + filename + "." + extensionDownloadFile+"?access_token="+keycloak.token;
+          link.href = "nc/full/" + filename + "." + extensionDownloadFile/*+"?access_token="+keycloak.token;*/
+          link.setAttribute("data","nc/full/" + filename + "." + extensionDownloadFile)
+          link.onclick=checkToken
         }else{ 
           link.onclick=function(){
             modal.open();

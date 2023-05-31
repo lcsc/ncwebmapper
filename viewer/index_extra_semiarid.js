@@ -113,31 +113,24 @@ topTitle.onAdd = function (map) {
   return superdiv;
 };
 
-// function downloadNowButton() {
-//   L.Control.Download = L.Control.extend({
-//     options: {
-//       position: 'bottomleft',
-//     },
-//     onAdd: function(map) {
-//       this._map = map;
-//       var container = this._container = L.DomUtil.create('div', 'map_name');
-//       if(varName!=null & varName!="NaN"){
-//         var link = L.DomUtil.create("a", "uiElement label", container);
-//         link.href =  "nc/" + "spei_now" + "." + extensionDownloadFile;
-//         link.textContent = 'Download last NC';
-//       }
-//       return container;
-//     },
-//     onRemove(map){
-//     }
-//   });
-//   controlDownload = new L.Control.Download();
-//   controlDownload.addTo(map);
-// };
+var forceUpdate=false;
+var requested=false;
 
 function checkToken(e){
   let link = this;
   if (keycloak.authenticated){
+    if(keycloak.isTokenExpired()|| forceUpdate && !requested){
+      requested=true;
+      keycloak.updateToken().then(function(refreshed) {
+        link.href = "nc/full/" + varName + "." + extensionDownloadFile+"?access_token="+keycloak.token;
+        link.click();
+        requested=false;
+    }).catch(function() {
+        requested=false;
+        alert('Failed to refresh the token, or the session has expired');
+    });
+      return false;
+    }
     link.href = "nc/full/" + varName + "." + extensionDownloadFile+"?access_token="+keycloak.token;
   }
   //

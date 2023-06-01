@@ -149,7 +149,32 @@ function checkToken(){
   return true;
 }
 
+var checks=0;
+
+function changeDownloadNc(){
+  checks++;
+  if(checks==10){
+    console.error("Not able to configure download NC in "+checks+" tries");
+    return;
+  }
+  if(window.controlDownload==undefined){
+    setTimeout(changeDownloadNc);
+    return;
+  }
+  console.info("Download NC configured after "+checks+" tries")
+  let link=window.controlDownload._container.getElementsByTagName('a')[0];
+  link.onclick=checkToken;
+  link.href = "nc/full/" + varName + "." + extensionDownloadFile
+  link.setAttribute("data","nc/full/" + varName + "." + extensionDownloadFile);
+}
+
 function downloadNowButton() {
+
+  if (keycloak.authenticated){  
+    setTimeout(changeDownloadNc);//queue the change request 
+  }
+
+
   L.Control.Download = L.Control.extend({
     options: {
       position: 'bottomleft',

@@ -107,10 +107,10 @@ write_nc_chunk_t = function(in_file, out_file, folder, lon_by = -1, lat_by = -1)
     } else {
         # Read/write data in batches
         for (x in seq(1, lon_num, by=lon_by)) {
-            x_rest = lon_num - x
+            x_rest = lon_num - x + 1
             x_count = if (x_rest >= lon_by) lon_by else x_rest
             for (y in seq(1, lat_num, by=lat_by)) {
-                y_rest = lat_num - y
+                y_rest = lat_num - y + 1
                 y_count = if (y_rest >= lat_by) lat_by else y_rest
                 ETo_data = ncvar_get(nc_in_file, var, start=c(x,y,1), count=c(x_count,y_count,time_num))
                 ncvar_put(nc_out_file, var, ETo_data, start=c(x,y,1), count=c(x_count,y_count,time_num))
@@ -199,7 +199,7 @@ write_nc_chunk_xy = function(in_file, out_file, folder, time_by = -1) {
     } else {
         # Read/write data in batches
         for (t in seq(1, time_num, by=time_by)) {
-            t_rest = time_num - t
+            t_rest = time_num - t + 1
             t_count = if (t_rest >= time_by) time_by else t_rest
             ETo_data = ncvar_get(nc_in_file, var, start=c(1,1,t), count=c(lon_num,lat_num,t_count))
             ncvar_put(nc_out_file, var, ETo_data, start=c(1,1,t), count=c(lon_num,lat_num,t_count))

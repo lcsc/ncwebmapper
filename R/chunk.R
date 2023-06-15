@@ -35,18 +35,16 @@ library(ncdf4)
 
 #' Create the new netCDF file with chunk dimensions that favor obtaining temporal series
 #' for each pixel.
-#' @param in_file Original netCDF file name
-#' @param out_file Name of the netCDF file with the same information as the original but with new chunk structure.
-#' @param folder Directory where the input file is located and where the output file will be produced.
+#' @param in_file Original netCDF file
+#' @param out_file netCDF file with the same information as the original but with new chunk structure.
 #' @param lon_by Number of pixels horizontally that will be read as a block during the read/write loop. -1 to read all at once.
 #' @param lat_by Number of pixels vertically that will be read as a block during the read/write loop. -1 to read all at once.
 #' @export
 #' @examples
-#' write_nc_chunk_t(in_file="ETo.nc", out_file="ETo-t.nc", folder="nc", lon_by=100, lat_by=100)
-write_nc_chunk_t = function(in_file, out_file, folder, lon_by = -1, lat_by = -1) {
+#' write_nc_chunk_t(in_file="ETo.nc", out_file="ETo-t.nc", lon_by=100, lat_by=100)
+write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     # Open the original netCDF file
-    nc_in_filename = file.path(folder, in_file)
-    nc_in_file = nc_open(nc_in_filename)
+    nc_in_file = nc_open(in_file)
 
     # Reads global attributes
     global_att = ncatt_get(nc_in_file, 0)
@@ -97,8 +95,7 @@ write_nc_chunk_t = function(in_file, out_file, folder, lon_by = -1, lat_by = -1)
                      longname=var_longname, compression=9)
 
     # Final file creation
-    nc_out_filename = file.path(folder, out_file)
-    nc_out_file = nc_create(nc_out_filename, list(var), force_v4 = TRUE)
+    nc_out_file = nc_create(out_file, list(var), force_v4 = TRUE)
 
     if (lon_by == lon_num && lat_by == lat_num) {
         # Read/write data at once
@@ -129,17 +126,15 @@ write_nc_chunk_t = function(in_file, out_file, folder, lon_by = -1, lat_by = -1)
 
 
 #' Create the new netCDF file with favorable chunk dimensions to obtain plans for each date.
-#' @param in_file Original netCDF file name
-#' @param out_file Name of the netCDF file with the same information as the original but with new chunk structure.
-#' @param folder Directory where the input file is located and where the output file will be produced.
+#' @param in_file Original netCDF file
+#' @param out_file netCDF file with the same information as the original but with new chunk structure.
 #' @param time_by Number of dates that will be read as a block during the read/write loop. -1 to read all at once.
 #' @export
 #' @examples
-#' write_nc_chunk_xy(in_file="ETo.nc", out_file="ETo-xy.nc", folder="nc", time_by=100)
-write_nc_chunk_xy = function(in_file, out_file, folder, time_by = -1) {
+#' write_nc_chunk_xy(in_file="ETo.nc", out_file="ETo-xy.nc", time_by=100)
+write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     # Open the original netCDF file
-    nc_in_filename = file.path(folder, in_file)
-    nc_in_file = nc_open(nc_in_filename)
+    nc_in_file = nc_open(in_file)
 
     # Reads global attributes
     global_att = ncatt_get(nc_in_file, 0)
@@ -189,8 +184,7 @@ write_nc_chunk_xy = function(in_file, out_file, folder, time_by = -1) {
                      longname=var_longname, compression=9)
 
     # Final file creation
-    nc_out_filename = file.path(folder, out_file)
-    nc_out_file = nc_create(nc_out_filename, list(var), force_v4 = TRUE)
+    nc_out_file = nc_create(out_file, list(var), force_v4 = TRUE)
 
     if (time_by == time_num) {
         # Read/write data at once
@@ -216,16 +210,25 @@ write_nc_chunk_xy = function(in_file, out_file, folder, time_by = -1) {
 }
 
 
-# in_file = "ETo.nc"
-# out_file = "ETo-t.nc"
-# folder = "/home/edumoreno/Nextcloud/tareas/2023-04-17_generación_csv_al_vuelo/proto_eto/viewer/nc"
+create_nc_name = function(file_name, sufix="-t") {
+    pos = unlist(gregexpr(".nc", file_name))
+    ext_pos = pos[length(pos)]
+    return(paste(substr(file_name,1,ext_pos-1), sufix, substr(file_name,ext_pos,nchar(file_name)), sep=""))
+}
+
+
+# nc_route <- "../viewer/nc"
+# ncFile <- "ETo.nc"
+# file <- file.path(nc_route, ncFile)
+# t_file = file.path(nc_route, create_nc_name(ncFile))
 # lon_by = 100
 # lat_by = 100
-# write_nc_chunk_t(in_file=in_file, out_file=out_file, folder=folder, lon_by=lon_by, lat_by=lat_by)
+# write_nc_chunk_t(in_file=file, out_file=t_file, lon_by=lon_by, lat_by=lat_by)
 
 
-# in_file = "ETo.nc"
-# out_file = "ETo-xy.nc"
-# folder = "/home/edumoreno/Nextcloud/tareas/2023-04-17_generación_csv_al_vuelo/proto_eto/viewer/nc"
-# time_by = 100
-# write_nc_chunk_xy(in_file=in_file, out_file=out_file, folder=folder, time_by=time_by)
+nc_route <- "../viewer/nc"
+ncFile <- "ETo.nc"
+file <- file.path(nc_route, ncFile)
+xy_file = file.path(nc_route, create_nc_name(ncFile, sufix="-xy"))
+time_by = 100
+write_nc_chunk_xy(in_file=file, out_file=xy_file, time_by=time_by)

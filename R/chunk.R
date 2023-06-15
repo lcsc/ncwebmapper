@@ -226,9 +226,9 @@ create_nc_name = function(file_name, sufix="-t") {
 # write_nc_chunk_t(in_file=file, out_file=t_file, lon_by=lon_by, lat_by=lat_by)
 
 
-nc_route <- "../viewer/nc"
-ncFile <- "ETo.nc"
-file <- file.path(nc_route, ncFile)
-xy_file = file.path(nc_route, create_nc_name(ncFile, sufix="-xy"))
-time_by = 100
-write_nc_chunk_xy(in_file=file, out_file=xy_file, time_by=time_by)
+# nc_route <- "../viewer/nc"
+# ncFile <- "ETo.nc"
+# file <- file.path(nc_route, ncFile)
+# xy_file = file.path(nc_route, create_nc_name(ncFile, sufix="-xy"))
+# time_by = 100
+# write_nc_chunk_xy(in_file=file, out_file=xy_file, time_by=time_by)

@@ -217,6 +217,62 @@ create_nc_name = function(file_name, sufix="-t") {
 }
 
 
+get_struct_typecode = function(nc_type) {
+    result = switch(
+        nc_type,
+        "float"= "f",
+        "double"= "d",
+        "int"= "i"
+    )
+    return(result)
+}
+
+
+# Crea el JSON
+write_nc_env = function(in_file, out_file) {
+    # Abre el archivo netCDF original
+    nc_in_file = nc_open(in_file)
+
+    write("var ncEnv = {", out_file)
+    var_name = nc_in_file$var[[1]]$name
+    write(paste("    \"var_name\": \"", var_name, "\",", sep=""), out_file, append=TRUE)
+    lon_data = ncvar_get(nc_in_file, "lon")
+    lon_min = lon_data[1]
+    write(paste("    \"lon_min\": ", lon_min, ",", sep=""), out_file, append=TRUE)
+    lon_max = lon_data[length(lon_data)]
+    write(paste("    \"lon_max\": ", lon_max, ",", sep=""), out_file, append=TRUE)
+    lon_num = length(lon_data)
+    write(paste("    \"lon_num\": ", lon_num, ",", sep=""), out_file, append=TRUE)
+    lat_data = ncvar_get(nc_in_file, "lat")
+    lat_min = lat_data[1]
+    write(paste("    \"lat_min\": ", lat_min, ",", sep=""), out_file, append=TRUE)
+    lat_max = lat_data[length(lat_data)]
+    write(paste("    \"lat_max\": ", lat_max, ",", sep=""), out_file, append=TRUE)
+    lat_num = length(lat_data)
+    write(paste("    \"lat_num\": ", lat_num, ",", sep=""), out_file, append=TRUE)
+    time_data = ncvar_get(nc_in_file, "time")
+    time_min = time_data[1]
+    write(paste("    \"time_min\": ", time_min, ",", sep=""), out_file, append=TRUE)
+    time_max = time_data[length(time_data)]
+    write(paste("    \"time_max\": ", time_max, ",", sep=""), out_file, append=TRUE)
+    time_num = length(time_data)
+    write(paste("    \"time_num\": ", time_num, ",", sep=""), out_file, append=TRUE)
+    var_type = get_struct_typecode(nc_in_file$var[[1]]$prec)
+    write(paste("    \"var_type\": \"", var_type, "\",", sep=""), out_file, append=TRUE)
+    compressed = if(is.na(nc_in_file$var[[1]]$compression)) "false" else "true"
+    write(paste("    \"compressed\": ", compressed, ",", sep=""), out_file, append=TRUE)
+    offset_type = "Q"
+    write(paste("    \"offset_type\": \"", offset_type, "\",", sep=""), out_file, append=TRUE)
+    size_type = "I"
+    write(paste("    \"size_type\": \"", size_type, "\",", sep=""), out_file, append=TRUE)
+    projection = "+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs"
+    write(paste("    \"projection\": \"", projection, "\"", sep=""), out_file, append=TRUE)
+    write(paste("}"), out_file, append=TRUE)
+
+    nc_close(nc_in_file)
+}
+
+
 # nc_route = "../viewer/nc"
 # ncFile = "ETo.nc"
 # file = file.path(nc_route, ncFile)
@@ -232,3 +288,12 @@ create_nc_name = function(file_name, sufix="-t") {
 # xy_file = file.path(nc_route, create_nc_name(ncFile, sufix="-xy"))
 # time_by = 100
 # write_nc_chunk_xy(in_file=file, out_file=xy_file, time_by=time_by)
+
+
+# nc_route = "../viewer/nc"
+# ncFile = "ETo.nc"
+# file = file.path(nc_route, ncFile)
+# ncEnv_route = "../viewer"
+# ncEnvFile = "ncEnv.js"
+# envFile = file.path(ncEnv_route, ncEnvFile)
+# write_nc_env(in_file=file, out_file=envFile)

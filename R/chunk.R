@@ -46,6 +46,8 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     # Open the original netCDF file
     nc_in_file = nc_open(in_file)
 
+    var_name = nc_in_file$var[[1]]$name
+
     # Reads global attributes
     global_att = ncatt_get(nc_in_file, 0)
 
@@ -67,9 +69,9 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     time_calendar_att = ncatt_get(nc_in_file, "time", "calendar")
     time_calendar = if(time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
 
-    var_longname_att = ncatt_get(nc_in_file, "ETo", "long_name")
+    var_longname_att = ncatt_get(nc_in_file, var_name, "long_name")
     var_longname = if(var_longname_att$hasatt) var_longname_att$value else "?"
-    var_units_att = ncatt_get(nc_in_file, "ETo", "units")
+    var_units_att = ncatt_get(nc_in_file, var_name, "units")
     var_units = if(var_units_att$hasatt) var_units_att$value else "?"
 
     # Reads the dimensions of the original file
@@ -91,7 +93,7 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     lat = ncdim_def("lat", lat_units, lat_data, longname=lat_longname)
     time = ncdim_def("time", time_units, time_data, longname=time_longname,
                      calendar=time_calendar)
-    var = ncvar_def("ETo", var_units, list(lon, lat, time), chunksizes=c(1,1,time_num),
+    var = ncvar_def(var_name, var_units, list(lon, lat, time), chunksizes=c(1,1,time_num),
                      longname=var_longname, compression=9)
 
     # Final file creation
@@ -99,8 +101,8 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
 
     if (lon_by == lon_num && lat_by == lat_num) {
         # Read/write data at once
-        ETo_data = ncvar_get(nc_in_file, var)
-        ncvar_put(nc_out_file, var, ETo_data)
+        var_data = ncvar_get(nc_in_file, var)
+        ncvar_put(nc_out_file, var, var_data)
     } else {
         # Read/write data in batches
         for (x in seq(1, lon_num, by=lon_by)) {
@@ -109,8 +111,8 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
             for (y in seq(1, lat_num, by=lat_by)) {
                 y_rest = lat_num - y + 1
                 y_count = if (y_rest >= lat_by) lat_by else y_rest
-                ETo_data = ncvar_get(nc_in_file, var, start=c(x,y,1), count=c(x_count,y_count,time_num))
-                ncvar_put(nc_out_file, var, ETo_data, start=c(x,y,1), count=c(x_count,y_count,time_num))
+                var_data = ncvar_get(nc_in_file, var, start=c(x,y,1), count=c(x_count,y_count,time_num))
+                ncvar_put(nc_out_file, var, var_data, start=c(x,y,1), count=c(x_count,y_count,time_num))
             }
         }
     }
@@ -136,6 +138,8 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     # Open the original netCDF file
     nc_in_file = nc_open(in_file)
 
+    var_name = nc_in_file$var[[1]]$name
+
     # Reads global attributes
     global_att = ncatt_get(nc_in_file, 0)
 
@@ -157,9 +161,9 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     time_calendar_att = ncatt_get(nc_in_file, "time", "calendar")
     time_calendar = if(time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
 
-    var_longname_att = ncatt_get(nc_in_file, "ETo", "long_name")
+    var_longname_att = ncatt_get(nc_in_file, var_name, "long_name")
     var_longname = if(var_longname_att$hasatt) var_longname_att$value else "?"
-    var_units_att = ncatt_get(nc_in_file, "ETo", "units")
+    var_units_att = ncatt_get(nc_in_file, var_name, "units")
     var_units = if(var_units_att$hasatt) var_units_att$value else "?"
 
     # Reads the dimensions of the original file
@@ -180,7 +184,7 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     lat = ncdim_def("lat", lat_units, lat_data, longname=lat_longname)
     time = ncdim_def("time", time_units, time_data, longname=time_longname,
                      calendar=time_calendar)
-    var = ncvar_def("ETo", var_units, list(lon, lat, time), chunksizes=c(lon_num,lat_num,1),
+    var = ncvar_def(var_name, var_units, list(lon, lat, time), chunksizes=c(lon_num,lat_num,1),
                      longname=var_longname, compression=9)
 
     # Final file creation
@@ -188,15 +192,15 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
 
     if (time_by == time_num) {
         # Read/write data at once
-        ETo_data = ncvar_get(nc_in_file, var)
-        ncvar_put(nc_out_file, var, ETo_data)
+        var_data = ncvar_get(nc_in_file, var)
+        ncvar_put(nc_out_file, var, var_data)
     } else {
         # Read/write data in batches
         for (t in seq(1, time_num, by=time_by)) {
             t_rest = time_num - t + 1
             t_count = if (t_rest >= time_by) time_by else t_rest
-            ETo_data = ncvar_get(nc_in_file, var, start=c(1,1,t), count=c(lon_num,lat_num,t_count))
-            ncvar_put(nc_out_file, var, ETo_data, start=c(1,1,t), count=c(lon_num,lat_num,t_count))
+            var_data = ncvar_get(nc_in_file, var, start=c(1,1,t), count=c(lon_num,lat_num,t_count))
+            ncvar_put(nc_out_file, var, var_data, start=c(1,1,t), count=c(lon_num,lat_num,t_count))
         }
     }
 

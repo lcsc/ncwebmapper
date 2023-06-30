@@ -32,6 +32,7 @@
 #' @import ncdf4
 
 library(ncdf4)
+library(hdf5r)
 
 #' Create the new netCDF file with chunk dimensions that favor obtaining temporal series
 #' for each pixel.
@@ -214,10 +215,13 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
 }
 
 
-create_nc_name = function(file_name, sufix="-t") {
+create_nc_name = function(file_name, sufix="-t", ext="") {
     pos = unlist(gregexpr(".nc", file_name))
     ext_pos = pos[length(pos)]
-    return(paste(substr(file_name,1,ext_pos-1), sufix, substr(file_name,ext_pos,nchar(file_name)), sep=""))
+    if (ext == "") {
+        ext = substr(file_name,ext_pos,nchar(file_name))
+    }
+    return(paste(substr(file_name,1,ext_pos-1), sufix, ext, sep=""))
 }
 
 
@@ -277,6 +281,68 @@ write_nc_env = function(in_file, out_file) {
 }
 
 
+# Crea el directorio de chunks binario para el nc orientado a las series temporales de cada pixel
+write_nc_t_chunk_dir = function(in_file, out_file) {
+    # Averigua nombre de variable principal
+    nc_in_file = nc_open(in_file)
+    var_name = nc_in_file$var[[1]]$name
+    nc_close(nc_in_file)
+
+    # Abre el archivo netCDF original
+    nc_in_file = h5file(in_file, mode="r")
+
+    # Abrir un archivo binario en modo escritura
+    bin_out_file = file(out_file, "wb")
+
+    lon_num = nc_in_file[[var_name]]$dims[[1]]
+    lat_num = nc_in_file[[var_name]]$dims[[2]]
+    time_num = nc_in_file[[var_name]]$dims[[3]]
+
+    for (y in seq(1, lat_num)) {
+        for (x in seq(1, lon_num)) {
+            chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(0,y-1,x-1))
+            # Escribir los pares de números en el archivo binario
+            writeBin(as.integer(chunk_info$addr), bin_out_file, size = 8, endian = "little")
+            writeBin(as.integer(chunk_info$size), bin_out_file, size = 4, endian = "little")
+        }
+    }
+
+    # Cerrar los archivos
+    close(bin_out_file)
+    nc_in_file$close()
+}
+
+
+# Crea el directorio de chunks binario para el nc orientado a los planos de cada fecha
+write_nc_xy_chunk_dir = function(in_file, out_file) {
+    # Averigua nombre de variable principal
+    nc_in_file = nc_open(in_file)
+    var_name = nc_in_file$var[[1]]$name
+    nc_close(nc_in_file)
+
+    # Abre el archivo netCDF original
+    nc_in_file = h5file(in_file, mode="r")
+
+    # Abrir un archivo binario en modo escritura
+    bin_out_file = file(out_file, "wb")
+
+    lon_num = nc_in_file[[var_name]]$dims[[1]]
+    lat_num = nc_in_file[[var_name]]$dims[[2]]
+    time_num = nc_in_file[[var_name]]$dims[[3]]
+
+    for (t in seq(1, time_num)) {
+        chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(t-1,0,0))
+        # Escribir los pares de números en el archivo binario
+        writeBin(as.integer(chunk_info$addr), bin_out_file, size = 8, endian = "little")
+        writeBin(as.integer(chunk_info$size), bin_out_file, size = 4, endian = "little")
+    }
+
+    # Cerrar los archivos
+    close(bin_out_file)
+    nc_in_file$close()
+}
+
+
 # nc_route = "../viewer/nc"
 # ncFile = "ETo.nc"
 # file = file.path(nc_route, ncFile)
@@ -301,3 +367,17 @@ write_nc_env = function(in_file, out_file) {
 # ncEnvFile = "ncEnv.js"
 # envFile = file.path(ncEnv_route, ncEnvFile)
 # write_nc_env(in_file=file, out_file=envFile)
+
+
+#nc_route = "/home/docker/workdir/proto_eto/viewer/nc"
+#ncFile = "ETo-t.nc"
+#file = file.path(nc_route, ncFile)
+#bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
+#write_nc_t_chunk_dir(in_file = file, out_file = bin_file)
+
+
+#nc_route = "/home/docker/workdir/proto_eto/viewer/nc"
+#ncFile = "ETo-xy.nc"
+#file = file.path(nc_route, ncFile)
+#bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
+#write_nc_xy_chunk_dir(in_file = file, out_file = bin_file)

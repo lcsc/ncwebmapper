@@ -221,7 +221,7 @@ create_nc_name = function(file_name, sufix="-t", ext="") {
     if (ext == "") {
         ext = substr(file_name,ext_pos,nchar(file_name))
     }
-    return(paste(substr(file_name,1,ext_pos-1), sufix, ext, sep=""))
+    return(paste0(substr(file_name,1,ext_pos-1), sufix, ext))
 }
 
 
@@ -243,39 +243,39 @@ write_nc_env = function(in_file, out_file) {
 
     write("var ncEnv = {", out_file)
     var_name = nc_in_file$var[[1]]$name
-    write(paste("    \"var_name\": \"", var_name, "\",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"var_name\": \"", var_name, "\","), out_file, append=TRUE)
     lon_data = ncvar_get(nc_in_file, "lon")
     lon_min = lon_data[1]
-    write(paste("    \"lon_min\": ", lon_min, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"lon_min\": ", lon_min, ","), out_file, append=TRUE)
     lon_max = lon_data[length(lon_data)]
-    write(paste("    \"lon_max\": ", lon_max, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"lon_max\": ", lon_max, ","), out_file, append=TRUE)
     lon_num = length(lon_data)
-    write(paste("    \"lon_num\": ", lon_num, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"lon_num\": ", lon_num, ","), out_file, append=TRUE)
     lat_data = ncvar_get(nc_in_file, "lat")
     lat_min = lat_data[1]
-    write(paste("    \"lat_min\": ", lat_min, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"lat_min\": ", lat_min, ","), out_file, append=TRUE)
     lat_max = lat_data[length(lat_data)]
-    write(paste("    \"lat_max\": ", lat_max, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"lat_max\": ", lat_max, ","), out_file, append=TRUE)
     lat_num = length(lat_data)
-    write(paste("    \"lat_num\": ", lat_num, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"lat_num\": ", lat_num, ","), out_file, append=TRUE)
     time_data = ncvar_get(nc_in_file, "time")
     time_min = time_data[1]
-    write(paste("    \"time_min\": ", time_min, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"time_min\": ", time_min, ","), out_file, append=TRUE)
     time_max = time_data[length(time_data)]
-    write(paste("    \"time_max\": ", time_max, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"time_max\": ", time_max, ","), out_file, append=TRUE)
     time_num = length(time_data)
-    write(paste("    \"time_num\": ", time_num, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"time_num\": ", time_num, ","), out_file, append=TRUE)
     var_type = get_struct_typecode(nc_in_file$var[[1]]$prec)
-    write(paste("    \"var_type\": \"", var_type, "\",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"var_type\": \"", var_type, "\","), out_file, append=TRUE)
     compressed = if(is.na(nc_in_file$var[[1]]$compression)) "false" else "true"
-    write(paste("    \"compressed\": ", compressed, ",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"compressed\": ", compressed, ","), out_file, append=TRUE)
     offset_type = "Q"
-    write(paste("    \"offset_type\": \"", offset_type, "\",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"offset_type\": \"", offset_type, "\","), out_file, append=TRUE)
     size_type = "I"
-    write(paste("    \"size_type\": \"", size_type, "\",", sep=""), out_file, append=TRUE)
+    write(paste0("    \"size_type\": \"", size_type, "\","), out_file, append=TRUE)
     projection = "+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs"
-    write(paste("    \"projection\": \"", projection, "\"", sep=""), out_file, append=TRUE)
-    write(paste("}"), out_file, append=TRUE)
+    write(paste0("    \"projection\": \"", projection, "\""), out_file, append=TRUE)
+    write("}", out_file, append=TRUE)
 
     nc_close(nc_in_file)
 }

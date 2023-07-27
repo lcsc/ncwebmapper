@@ -99,10 +99,10 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
   {
     coords <- read_coords(nc, epsg)
 
-    latIni <- min(coords[, "lat"])
-    latEnd <- max(coords[, "lat"])
-    lonIni <- min(coords[, "lon"])
-    lonEnd <- max(coords[, "lon"])
+    latIni <- min(coords[, 2])
+    latEnd <- max(coords[, 2])
+    lonIni <- min(coords[, 1])
+    lonEnd <- max(coords[, 1])
   }
 
   if(!is.na(infoJs$latIni) & !is.na(infoJs$latEnd) & !is.na(infoJs$lonIni) & !is.na(infoJs$lonEnd)){
@@ -217,7 +217,7 @@ arrayRtojs <- function(name, value, type="character"){
     }
     if(type=="character"){
       sep <- "'"
-      values <- value[[t]]
+      values <- as.Date(value[[t]])
     }else{
       sep <- ""
       values <- round(value[[t]], digits=3)

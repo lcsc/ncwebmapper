@@ -28,12 +28,12 @@
 #####################################################################
 
 #' @import js
-#' @import sp
+#' @import sf
 #' @import ncdf4
 #' @import raster
 
 library(js)
-library(sp)
+library(sf)
 library(ncdf4)
 library(raster)
 

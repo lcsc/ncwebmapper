@@ -215,6 +215,13 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
 }
 
 
+#' Create new nc names for rechunked files and chunk directories
+#' @param file_name Original netCDF file
+#' @param sufix Sufix to put after bare filename and before extension
+#' @param ext New file extension
+#' @export
+#' @examples
+#' create_nc_name(file_name="ETo.nc", sufix="-t", ext=".bin")
 create_nc_name = function(file_name, sufix="-t", ext="") {
     pos = unlist(gregexpr(".nc", file_name))
     ext_pos = pos[length(pos)]

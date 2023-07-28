@@ -17,5 +17,5 @@ write_nc_chunk_xy(in_file, out_file, time_by = -1)
 Create the new netCDF file with favorable chunk dimensions to obtain plans for each date.
 }
 \examples{
-write_nc_chunk_xy(in_file="ETo.nc", out_file="ETo-xy.nc", time_by=100)
+write_nc_chunk_xy(in_file="/path/ETo.nc", out_file="/path/ETo-xy.nc", time_by=100)
 }

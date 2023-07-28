@@ -21,5 +21,5 @@ Create the new netCDF file with chunk dimensions that favor obtaining temporal s
 for each pixel.
 }
 \examples{
-write_nc_chunk_t(in_file="ETo.nc", out_file="ETo-t.nc", lon_by=100, lat_by=100)
+write_nc_chunk_t(in_file="/path/ETo.nc", out_file="/path/ETo-t.nc", lon_by=100, lat_by=100)
 }

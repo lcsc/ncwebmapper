@@ -2,19 +2,22 @@
 % Please edit documentation in R/chunk.R
 \name{create_nc_name}
 \alias{create_nc_name}
-\title{Create new nc names for rechunked files and chunk directories}
+\title{Filename generator for rechunked nc and chunk directories.}
 \usage{
 create_nc_name(file_name, sufix = "-t", ext = "")
 }
 \arguments{
-\item{file_name}{Original netCDF file}
+\item{file_name}{Original netCDF filename}
 
-\item{sufix}{Sufix to put after bare filename and before extension}
+\item{sufix}{Optional suffix to be added to the end of the file name before the extension}
 
-\item{ext}{New file extension}
+\item{ext}{File extension. If given the empty value, the original extension is maintained}
+}
+\value{
+New filename
 }
 \description{
-Create new nc names for rechunked files and chunk directories
+Filename generator for rechunked nc and chunk directories.
 }
 \examples{
 create_nc_name(file_name="ETo.nc", sufix="-t", ext=".bin")

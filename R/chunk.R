@@ -42,7 +42,7 @@ library(hdf5r)
 #' @param lat_by Number of pixels vertically that will be read as a block during the read/write loop. -1 to read all at once.
 #' @export
 #' @examples
-#' write_nc_chunk_t(in_file="ETo.nc", out_file="ETo-t.nc", lon_by=100, lat_by=100)
+#' write_nc_chunk_t(in_file="/path/ETo.nc", out_file="/path/ETo-t.nc", lon_by=100, lat_by=100)
 write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     # Open the original netCDF file
     nc_in_file = nc_open(in_file)
@@ -134,7 +134,7 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
 #' @param time_by Number of dates that will be read as a block during the read/write loop. -1 to read all at once.
 #' @export
 #' @examples
-#' write_nc_chunk_xy(in_file="ETo.nc", out_file="ETo-xy.nc", time_by=100)
+#' write_nc_chunk_xy(in_file="/path/ETo.nc", out_file="/path/ETo-xy.nc", time_by=100)
 write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     # Open the original netCDF file
     nc_in_file = nc_open(in_file)
@@ -215,10 +215,11 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
 }
 
 
-#' Create new nc names for rechunked files and chunk directories
-#' @param file_name Original netCDF file
-#' @param sufix Sufix to put after bare filename and before extension
-#' @param ext New file extension
+#' Filename generator for rechunked nc and chunk directories.
+#' @param file_name Original netCDF filename
+#' @param sufix Optional suffix to be added to the end of the file name before the extension
+#' @param ext File extension. If given the empty value, the original extension is maintained
+#' @return New filename
 #' @export
 #' @examples
 #' create_nc_name(file_name="ETo.nc", sufix="-t", ext=".bin")
@@ -226,12 +227,18 @@ create_nc_name = function(file_name, sufix="-t", ext="") {
     pos = unlist(gregexpr(".nc", file_name))
     ext_pos = pos[length(pos)]
     if (ext == "") {
-        ext = substr(file_name,ext_pos,nchar(file_name))
+        ext = substr(file_name, ext_pos, nchar(file_name))
     }
-    return(paste0(substr(file_name,1,ext_pos-1), sufix, ext))
+    return(paste0(substr(file_name, 1, ext_pos-1), sufix, ext))
 }
 
 
+#' Converts the data type of a variable or dimension of a netCDF to the data type codes used
+#' by the struct library.
+#' @param nc_type netCDF data type
+#' @return struct data type
+#' @examples
+#' get_struct_typecode(nc_type="double")
 get_struct_typecode = function(nc_type) {
     result = switch(
         nc_type,
@@ -243,9 +250,14 @@ get_struct_typecode = function(nc_type) {
 }
 
 
-# Crea el JSON
+#' Create the JSON ncEnv with meta-information about the netCDF file.
+#' @param in_file Original netCDF file
+#' @param out_file JSON file
+#' @export
+#' @examples
+#' write_nc_env(in_file="/path/ETo.nc", out_file="/path/ncEnv.js")
 write_nc_env = function(in_file, out_file) {
-    # Abre el archivo netCDF original
+    # Open the original netCDF file
     nc_in_file = nc_open(in_file)
 
     write("var ncEnv = {", out_file)
@@ -288,17 +300,22 @@ write_nc_env = function(in_file, out_file) {
 }
 
 
-# Crea el directorio de chunks binario para el nc orientado a las series temporales de cada pixel
+#' Create the binary chunks directory for the nc oriented to the time series of each pixel.
+#' @param in_file netCDF file with chunking oriented to the time series of each pixel. 
+#' @param out_file Chunks directory file.
+#' @export
+#' @examples
+#' write_nc_t_chunk_dir(in_file="/path/ETo-t.nc", out_file="/path/ETo-t.bin")
 write_nc_t_chunk_dir = function(in_file, out_file) {
-    # Averigua nombre de variable principal
+    # Find out name of main variable
     nc_in_file = nc_open(in_file)
     var_name = nc_in_file$var[[1]]$name
     nc_close(nc_in_file)
 
-    # Abre el archivo netCDF original
+    # Open the netCDF file
     nc_in_file = h5file(in_file, mode="r")
 
-    # Abrir un archivo binario en modo escritura
+    # Open a binary file in write mode
     bin_out_file = file(out_file, "wb")
 
     lon_num = nc_in_file[[var_name]]$dims[[1]]
@@ -308,29 +325,34 @@ write_nc_t_chunk_dir = function(in_file, out_file) {
     for (y in seq(1, lat_num)) {
         for (x in seq(1, lon_num)) {
             chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(0,y-1,x-1))
-            # Escribir los pares de números en el archivo binario
+            # Write the number pairs to the binary file
             writeBin(as.integer(chunk_info$addr), bin_out_file, size = 8, endian = "little")
             writeBin(as.integer(chunk_info$size), bin_out_file, size = 4, endian = "little")
         }
     }
 
-    # Cerrar los archivos
+    # Close files
     close(bin_out_file)
     nc_in_file$close()
 }
 
 
-# Crea el directorio de chunks binario para el nc orientado a los planos de cada fecha
+#' Create the binary chunks directory for the nc oriented to the maps of each date.
+#' @param in_file netCDF file with chunking oriented to the maps of each date.
+#' @param out_file Chunks directory file.
+#' @export
+#' @examples
+#' write_nc_xy_chunk_dir(in_file="/path/ETo-xy.nc", out_file="/path/ETo-xy.bin")
 write_nc_xy_chunk_dir = function(in_file, out_file) {
-    # Averigua nombre de variable principal
+    # Find out name of main variable
     nc_in_file = nc_open(in_file)
     var_name = nc_in_file$var[[1]]$name
     nc_close(nc_in_file)
 
-    # Abre el archivo netCDF original
+    # Open the netCDF file
     nc_in_file = h5file(in_file, mode="r")
 
-    # Abrir un archivo binario en modo escritura
+    # Open a binary file in write mode
     bin_out_file = file(out_file, "wb")
 
     lon_num = nc_in_file[[var_name]]$dims[[1]]
@@ -339,16 +361,18 @@ write_nc_xy_chunk_dir = function(in_file, out_file) {
 
     for (t in seq(1, time_num)) {
         chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(t-1,0,0))
-        # Escribir los pares de números en el archivo binario
+        # Write the number pairs to the binary file
         writeBin(as.integer(chunk_info$addr), bin_out_file, size = 8, endian = "little")
         writeBin(as.integer(chunk_info$size), bin_out_file, size = 4, endian = "little")
     }
 
-    # Cerrar los archivos
+    # Close files
     close(bin_out_file)
     nc_in_file$close()
 }
 
+
+## Usage
 
 # nc_route = "../viewer/nc"
 # ncFile = "ETo.nc"

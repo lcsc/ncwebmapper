@@ -75,9 +75,9 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1, lon_nam
     time_calendar = if(time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
 
     var_longname_att = ncatt_get(nc_in_file, var_name, "long_name")
-    var_longname = if(var_longname_att$hasatt) var_longname_att$value else "?"
+    var_longname = if(var_longname_att$hasatt) var_longname_att$value else NULL
     var_units_att = ncatt_get(nc_in_file, var_name, "units")
-    var_units = if(var_units_att$hasatt) var_units_att$value else "?"
+    var_units = if(var_units_att$hasatt) var_units_att$value else ""
 
     # Reads the dimensions of the original file
     lon_data = ncvar_get(nc_in_file, lon_name)
@@ -98,8 +98,11 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1, lon_nam
     lat = ncdim_def(lat_name, lat_units, lat_data, longname=lat_longname)
     time = ncdim_def("time", time_units, time_data, longname=time_longname,
                      calendar=time_calendar)
-    var = ncvar_def(var_name, var_units, list(lon, lat, time), chunksizes=c(1,1,time_num),
-                     longname=var_longname, compression=9)
+    args = list(name=var_name, units=var_units, dim=list(lon, lat, time),
+                chunksizes=c(1,1,time_num), compression=9)
+    if (!is.null(var_longname))
+        args <- list.append(args, longname=var_longname)
+    var = do.call(ncvar_def, args)
 
     # Final file creation
     nc_out_file = nc_create(out_file, list(var), force_v4 = TRUE)
@@ -169,9 +172,9 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1, lon_name = "lon", 
     time_calendar = if(time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
 
     var_longname_att = ncatt_get(nc_in_file, var_name, "long_name")
-    var_longname = if(var_longname_att$hasatt) var_longname_att$value else "?"
+    var_longname = if(var_longname_att$hasatt) var_longname_att$value else NULL
     var_units_att = ncatt_get(nc_in_file, var_name, "units")
-    var_units = if(var_units_att$hasatt) var_units_att$value else "?"
+    var_units = if(var_units_att$hasatt) var_units_att$value else ""
 
     # Reads the dimensions of the original file
     lon_data = ncvar_get(nc_in_file, lon_name)
@@ -191,8 +194,11 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1, lon_name = "lon", 
     lat = ncdim_def(lat_name, lat_units, lat_data, longname=lat_longname)
     time = ncdim_def("time", time_units, time_data, longname=time_longname,
                      calendar=time_calendar)
-    var = ncvar_def(var_name, var_units, list(lon, lat, time), chunksizes=c(lon_num,lat_num,1),
-                     longname=var_longname, compression=9)
+    args = list(name=var_name, units=var_units, dim=list(lon, lat, time),
+                chunksizes=c(lon_num,lat_num,1), compression=9)
+    if (!is.null(var_longname))
+        args <- list.append(args, longname=var_longname)
+    var = do.call(ncvar_def, args)
 
     # Final file creation
     nc_out_file = nc_create(out_file, list(var), force_v4 = TRUE)

@@ -4,7 +4,13 @@
 \alias{write_nc_chunk_xy}
 \title{Create the new netCDF file with favorable chunk dimensions to obtain plans for each date.}
 \usage{
-write_nc_chunk_xy(in_file, out_file, time_by = -1)
+write_nc_chunk_xy(
+  in_file,
+  out_file,
+  time_by = -1,
+  lon_name = "lon",
+  lat_name = "lat"
+)
 }
 \arguments{
 \item{in_file}{Original netCDF file}
@@ -12,10 +18,14 @@ write_nc_chunk_xy(in_file, out_file, time_by = -1)
 \item{out_file}{netCDF file with the same information as the original but with new chunk structure.}
 
 \item{time_by}{Number of dates that will be read as a block during the read/write loop. -1 to read all at once.}
+
+\item{lon_name}{Name of longitude dimension.}
+
+\item{lat_name}{Name of latitude dimension.}
 }
 \description{
 Create the new netCDF file with favorable chunk dimensions to obtain plans for each date.
 }
 \examples{
-write_nc_chunk_xy(in_file="/path/ETo.nc", out_file="/path/ETo-xy.nc", time_by=100)
+write_nc_chunk_xy(in_file="/path/ETo.nc", out_file="/path/ETo-xy.nc", time_by=100, lon_name = "lon", lat_name = "lat")
 }

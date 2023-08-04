@@ -5,7 +5,14 @@
 \title{Create the new netCDF file with chunk dimensions that favor obtaining temporal series
 for each pixel.}
 \usage{
-write_nc_chunk_t(in_file, out_file, lon_by = -1, lat_by = -1)
+write_nc_chunk_t(
+  in_file,
+  out_file,
+  lon_by = -1,
+  lat_by = -1,
+  lon_name = "lon",
+  lat_name = "lat"
+)
 }
 \arguments{
 \item{in_file}{Original netCDF file}
@@ -15,11 +22,15 @@ write_nc_chunk_t(in_file, out_file, lon_by = -1, lat_by = -1)
 \item{lon_by}{Number of pixels horizontally that will be read as a block during the read/write loop. -1 to read all at once.}
 
 \item{lat_by}{Number of pixels vertically that will be read as a block during the read/write loop. -1 to read all at once.}
+
+\item{lon_name}{Name of longitude dimension.}
+
+\item{lat_name}{Name of latitude dimension.}
 }
 \description{
 Create the new netCDF file with chunk dimensions that favor obtaining temporal series
 for each pixel.
 }
 \examples{
-write_nc_chunk_t(in_file="/path/ETo.nc", out_file="/path/ETo-t.nc", lon_by=100, lat_by=100)
+write_nc_chunk_t(in_file="/path/ETo.nc", out_file="/path/ETo-t.nc", lon_by=100, lat_by=100, lon_name = "lon", lat_name = "lat")
 }

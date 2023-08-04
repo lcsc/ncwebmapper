@@ -4,16 +4,20 @@
 \alias{write_nc_env}
 \title{Create the JSON ncEnv with meta-information about the netCDF file.}
 \usage{
-write_nc_env(in_file, out_file)
+write_nc_env(in_file, out_file, lon_name = "lon", lat_name = "lat")
 }
 \arguments{
 \item{in_file}{Original netCDF file}
 
 \item{out_file}{JSON file}
+
+\item{lon_name}{Name of longitude dimension.}
+
+\item{lat_name}{Name of latitude dimension.}
 }
 \description{
 Create the JSON ncEnv with meta-information about the netCDF file.
 }
 \examples{
-write_nc_env(in_file="/path/ETo.nc", out_file="/path/ncEnv.js")
+write_nc_env(in_file="/path/ETo.nc", out_file="/path/ncEnv.js", lon_name = "lon", lat_name = "lat")
 }

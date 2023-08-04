@@ -42,10 +42,12 @@ library(hdf5r)
 #' @param out_file netCDF file with the same information as the original but with new chunk structure.
 #' @param lon_by Number of pixels horizontally that will be read as a block during the read/write loop. -1 to read all at once.
 #' @param lat_by Number of pixels vertically that will be read as a block during the read/write loop. -1 to read all at once.
+#' @param lon_name Name of longitude dimension.
+#' @param lat_name Name of latitude dimension.
 #' @export
 #' @examples
-#' write_nc_chunk_t(in_file="/path/ETo.nc", out_file="/path/ETo-t.nc", lon_by=100, lat_by=100)
-write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
+#' write_nc_chunk_t(in_file="/path/ETo.nc", out_file="/path/ETo-t.nc", lon_by=100, lat_by=100, lon_name = "lon", lat_name = "lat")
+write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1, lon_name = "lon", lat_name = "lat") {
     # Open the original netCDF file
     nc_in_file = nc_open(in_file)
 
@@ -55,14 +57,14 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     global_att = ncatt_get(nc_in_file, 0)
 
     # Read attributes of dimensions and variable
-    lon_longname_att = ncatt_get(nc_in_file, "lon", "long_name")
+    lon_longname_att = ncatt_get(nc_in_file, lon_name, "long_name")
     lon_longname = if(lon_longname_att$hasatt) lon_longname_att$value else "longitude"
-    lon_units_att = ncatt_get(nc_in_file, "lon", "units")
+    lon_units_att = ncatt_get(nc_in_file, lon_name, "units")
     lon_units = if(lon_units_att$hasatt) lon_units_att$value else "m"
 
-    lat_longname_att = ncatt_get(nc_in_file, "lat", "long_name")
+    lat_longname_att = ncatt_get(nc_in_file, lat_name, "long_name")
     lat_longname = if(lat_longname_att$hasatt) lat_longname_att$value else "latitude"
-    lat_units_att = ncatt_get(nc_in_file, "lat", "units")
+    lat_units_att = ncatt_get(nc_in_file, lat_name, "units")
     lat_units = if(lat_units_att$hasatt) lat_units_att$value else "m"
 
     time_longname_att = ncatt_get(nc_in_file, "time", "long_name")
@@ -78,8 +80,8 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     var_units = if(var_units_att$hasatt) var_units_att$value else "?"
 
     # Reads the dimensions of the original file
-    lon_data = ncvar_get(nc_in_file, "lon")
-    lat_data = ncvar_get(nc_in_file, "lat")
+    lon_data = ncvar_get(nc_in_file, lon_name)
+    lat_data = ncvar_get(nc_in_file, lat_name)
     time_data = ncvar_get(nc_in_file, "time")
 
     # Sizes of dimensions
@@ -92,8 +94,8 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
     lat_by = if (lat_by < 1 || lat_by >= lat_num) lat_num else lat_by
 
     # Define the dimensions for the final file
-    lon = ncdim_def("lon", lon_units, lon_data, longname=lon_longname)
-    lat = ncdim_def("lat", lat_units, lat_data, longname=lat_longname)
+    lon = ncdim_def(lon_name, lon_units, lon_data, longname=lon_longname)
+    lat = ncdim_def(lat_name, lat_units, lat_data, longname=lat_longname)
     time = ncdim_def("time", time_units, time_data, longname=time_longname,
                      calendar=time_calendar)
     var = ncvar_def(var_name, var_units, list(lon, lat, time), chunksizes=c(1,1,time_num),
@@ -134,10 +136,12 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1) {
 #' @param in_file Original netCDF file
 #' @param out_file netCDF file with the same information as the original but with new chunk structure.
 #' @param time_by Number of dates that will be read as a block during the read/write loop. -1 to read all at once.
+#' @param lon_name Name of longitude dimension.
+#' @param lat_name Name of latitude dimension.
 #' @export
 #' @examples
-#' write_nc_chunk_xy(in_file="/path/ETo.nc", out_file="/path/ETo-xy.nc", time_by=100)
-write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
+#' write_nc_chunk_xy(in_file="/path/ETo.nc", out_file="/path/ETo-xy.nc", time_by=100, lon_name = "lon", lat_name = "lat")
+write_nc_chunk_xy = function(in_file, out_file, time_by = -1, lon_name = "lon", lat_name = "lat") {
     # Open the original netCDF file
     nc_in_file = nc_open(in_file)
 
@@ -147,14 +151,14 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     global_att = ncatt_get(nc_in_file, 0)
 
     # Read attributes of dimensions and variable
-    lon_longname_att = ncatt_get(nc_in_file, "lon", "long_name")
+    lon_longname_att = ncatt_get(nc_in_file, lon_name, "long_name")
     lon_longname = if(lon_longname_att$hasatt) lon_longname_att$value else "longitude"
-    lon_units_att = ncatt_get(nc_in_file, "lon", "units")
+    lon_units_att = ncatt_get(nc_in_file, lon_name, "units")
     lon_units = if(lon_units_att$hasatt) lon_units_att$value else "m"
 
-    lat_longname_att = ncatt_get(nc_in_file, "lat", "long_name")
+    lat_longname_att = ncatt_get(nc_in_file, lat_name, "long_name")
     lat_longname = if(lat_longname_att$hasatt) lat_longname_att$value else "latitude"
-    lat_units_att = ncatt_get(nc_in_file, "lat", "units")
+    lat_units_att = ncatt_get(nc_in_file, lat_name, "units")
     lat_units = if(lat_units_att$hasatt) lat_units_att$value else "m"
 
     time_longname_att = ncatt_get(nc_in_file, "time", "long_name")
@@ -170,8 +174,8 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     var_units = if(var_units_att$hasatt) var_units_att$value else "?"
 
     # Reads the dimensions of the original file
-    lon_data = ncvar_get(nc_in_file, "lon")
-    lat_data = ncvar_get(nc_in_file, "lat")
+    lon_data = ncvar_get(nc_in_file, lon_name)
+    lat_data = ncvar_get(nc_in_file, lat_name)
     time_data = ncvar_get(nc_in_file, "time")
 
     # Sizes of dimensions
@@ -183,8 +187,8 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1) {
     time_by = if (time_by < 1 || time_by >= time_num) time_num else time_by
  
     # Define the dimensions for the final file
-    lon = ncdim_def("lon", lon_units, lon_data, longname=lon_longname)
-    lat = ncdim_def("lat", lat_units, lat_data, longname=lat_longname)
+    lon = ncdim_def(lon_name, lon_units, lon_data, longname=lon_longname)
+    lat = ncdim_def(lat_name, lat_units, lat_data, longname=lat_longname)
     time = ncdim_def("time", time_units, time_data, longname=time_longname,
                      calendar=time_calendar)
     var = ncvar_def(var_name, var_units, list(lon, lat, time), chunksizes=c(lon_num,lat_num,1),
@@ -255,24 +259,26 @@ get_struct_typecode = function(nc_type) {
 #' Create the JSON ncEnv with meta-information about the netCDF file.
 #' @param in_file Original netCDF file
 #' @param out_file JSON file
+#' @param lon_name Name of longitude dimension.
+#' @param lat_name Name of latitude dimension.
 #' @export
 #' @examples
-#' write_nc_env(in_file="/path/ETo.nc", out_file="/path/ncEnv.js")
-write_nc_env = function(in_file, out_file) {
+#' write_nc_env(in_file="/path/ETo.nc", out_file="/path/ncEnv.js", lon_name = "lon", lat_name = "lat")
+write_nc_env = function(in_file, out_file, lon_name = "lon", lat_name = "lat") {
     # Open the original netCDF file
     nc_in_file = nc_open(in_file)
 
     write("var ncEnv = {", out_file)
     var_name = nc_in_file$var[[1]]$name
     write(paste0("    \"var_name\": \"", var_name, "\","), out_file, append=TRUE)
-    lon_data = ncvar_get(nc_in_file, "lon")
+    lon_data = ncvar_get(nc_in_file, lon_name)
     lon_min = lon_data[1]
     write(paste0("    \"lon_min\": ", lon_min, ","), out_file, append=TRUE)
     lon_max = lon_data[length(lon_data)]
     write(paste0("    \"lon_max\": ", lon_max, ","), out_file, append=TRUE)
     lon_num = length(lon_data)
     write(paste0("    \"lon_num\": ", lon_num, ","), out_file, append=TRUE)
-    lat_data = ncvar_get(nc_in_file, "lat")
+    lat_data = ncvar_get(nc_in_file, lat_name)
     lat_min = lat_data[1]
     write(paste0("    \"lat_min\": ", lat_min, ","), out_file, append=TRUE)
     lat_max = lat_data[length(lat_data)]

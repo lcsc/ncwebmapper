@@ -2,6 +2,7 @@
 #' @author 
 #' Borja Latorre Garcés \url{http://eead.csic.es/home/staffinfo?Id=215}; Soil and Water, EEAD, CSIC \url{http://www.eead.csic.es}
 #' Fergus Reig Gracia \url{http://fergusreig.es}; Environmental Hydrology, Climate and Human Activity Interactions, Geoenvironmental Processes, IPE, CSIC \url{http://www.ipe.csic.es/hidrologia-ambiental}
+#' Eduardo Moreno Lamana \url{https://apuntes.eduardofilo.es}; Environmental Hydrology, Climate and Human Activity Interactions, Geoenvironmental Processes, IPE, CSIC \url{http://www.ipe.csic.es/hidrologia-ambiental}
 #' 
 #' @details
 #' \tabular{ll}{
@@ -30,6 +31,7 @@
 #####################################################################
 
 #' @import ncdf4
+#' @import hdf5r
 
 library(ncdf4)
 library(hdf5r)

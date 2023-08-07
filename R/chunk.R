@@ -79,6 +79,7 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1, lon_nam
     var_longname = if(var_longname_att$hasatt) var_longname_att$value else NULL
     var_units_att = ncatt_get(nc_in_file, var_name, "units")
     var_units = if(var_units_att$hasatt) var_units_att$value else ""
+    var_missval = nc_in_file$var[[var_name]]$missval
 
     # Reads the dimensions of the original file
     lon_data = ncvar_get(nc_in_file, lon_name)
@@ -102,7 +103,9 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1, lon_nam
     args = list(name=var_name, units=var_units, dim=list(lon, lat, time),
                 chunksizes=c(1,1,time_num), compression=9)
     if (!is.null(var_longname))
-        args <- list.append(args, longname=var_longname)
+        args$longname = var_longname
+    if (!is.null(var_missval))
+        args$missval = var_missval
     var = do.call(ncvar_def, args)
 
     # Final file creation
@@ -177,6 +180,7 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1, lon_name = "lon", 
     var_longname = if(var_longname_att$hasatt) var_longname_att$value else NULL
     var_units_att = ncatt_get(nc_in_file, var_name, "units")
     var_units = if(var_units_att$hasatt) var_units_att$value else ""
+    var_missval = nc_in_file$var[[var_name]]$missval
 
     # Reads the dimensions of the original file
     lon_data = ncvar_get(nc_in_file, lon_name)
@@ -199,7 +203,9 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1, lon_name = "lon", 
     args = list(name=var_name, units=var_units, dim=list(lon, lat, time),
                 chunksizes=c(lon_num,lat_num,1), compression=9)
     if (!is.null(var_longname))
-        args <- list.append(args, longname=var_longname)
+        args$longname = var_longname
+    if (!is.null(var_missval))
+        args$missval = var_missval
     var = do.call(ncvar_def, args)
 
     # Final file creation

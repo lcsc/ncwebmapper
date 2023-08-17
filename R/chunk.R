@@ -36,6 +36,10 @@
 library(ncdf4)
 library(hdf5r)
 
+# Constants
+OFFSET_TYPE_SIZE = 8
+SIZE_TYPE_SIZE = 4
+
 #' Create the new netCDF file with chunk dimensions that favor obtaining temporal series
 #' for each pixel.
 #' @param in_file Original netCDF file
@@ -329,12 +333,12 @@ write_nc_env = function(in_file, out_file, lon_name = "lon", lat_name = "lat") {
 #' @examples
 #' write_nc_t_chunk_dir(in_file="/path/ETo-t.nc", out_file="/path/ETo-t.bin")
 write_nc_t_chunk_dir = function(in_file, out_file) {
-    # Find out name of main variable
+    # Find out name of main variable with ncdf4
     nc_in_file = nc_open(in_file)
     var_name = nc_in_file$var[[1]]$name
     nc_close(nc_in_file)
 
-    # Open the netCDF file
+    # Open the netCDF file with hdf5r
     nc_in_file = h5file(in_file, mode="r")
 
     # Open a binary file in write mode
@@ -348,10 +352,48 @@ write_nc_t_chunk_dir = function(in_file, out_file) {
         for (x in seq(1, lon_num)) {
             chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(0,y-1,x-1))
             # Write the number pairs to the binary file
-            writeBin(as.integer(chunk_info$addr), bin_out_file, size = 8, endian = "little")
-            writeBin(as.integer(chunk_info$size), bin_out_file, size = 4, endian = "little")
+            writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+            writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
         }
     }
+
+    # Close files
+    close(bin_out_file)
+    nc_in_file$close()
+}
+
+
+#' Create the binary chunks directory for the nc oriented to the time series of each pixel
+#' using the new H5Dchunk_iter function (https://docs.hdfgroup.org/hdf5/v1_14/group___h5_d.html#title6).
+#' @param in_file netCDF file with chunking oriented to the time series of each pixel. 
+#' @param out_file Chunks directory file.
+#' @export
+#' @examples
+#' write_nc_t_chunk_dir_iter(in_file="/path/ETo-t.nc", out_file="/path/ETo-t.bin")
+write_nc_t_chunk_dir_iter = function(in_file, out_file) {
+    # Find out name of main variable with ncdf4
+    nc_in_file = nc_open(in_file)
+    var_name = nc_in_file$var[[1]]$name
+    nc_close(nc_in_file)
+
+    # Open the netCDF file with hdf5r
+    nc_in_file = h5file(in_file, mode="r")
+
+    # Open a binary file in write mode
+    bin_out_file = file(out_file, "wb")
+
+    lon_num = nc_in_file[[var_name]]$dims[[1]]
+    lat_num = nc_in_file[[var_name]]$dims[[2]]
+    time_num = nc_in_file[[var_name]]$dims[[3]]
+
+    nc_in_file[[var_name]]$chunk_iter(function(chunk_info){
+        lat_index = chunk_info$offset[[2]]
+        lon_index = chunk_info$offset[[3]]
+        dir_pos = (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * (lon_index + lat_index * lon_num)
+        seek(bin_out_file, dir_pos)
+        writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+        writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
+    })
 
     # Close files
     close(bin_out_file)
@@ -366,12 +408,12 @@ write_nc_t_chunk_dir = function(in_file, out_file) {
 #' @examples
 #' write_nc_xy_chunk_dir(in_file="/path/ETo-xy.nc", out_file="/path/ETo-xy.bin")
 write_nc_xy_chunk_dir = function(in_file, out_file) {
-    # Find out name of main variable
+    # Find out name of main variable with ncdf4
     nc_in_file = nc_open(in_file)
     var_name = nc_in_file$var[[1]]$name
     nc_close(nc_in_file)
 
-    # Open the netCDF file
+    # Open the netCDF file with hdf5r
     nc_in_file = h5file(in_file, mode="r")
 
     # Open a binary file in write mode
@@ -384,9 +426,46 @@ write_nc_xy_chunk_dir = function(in_file, out_file) {
     for (t in seq(1, time_num)) {
         chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(t-1,0,0))
         # Write the number pairs to the binary file
-        writeBin(as.integer(chunk_info$addr), bin_out_file, size = 8, endian = "little")
-        writeBin(as.integer(chunk_info$size), bin_out_file, size = 4, endian = "little")
+        writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+        writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
     }
+
+    # Close files
+    close(bin_out_file)
+    nc_in_file$close()
+}
+
+
+#' Create the binary chunks directory for the nc oriented to the maps of each date
+#' using the new H5Dchunk_iter function (https://docs.hdfgroup.org/hdf5/v1_14/group___h5_d.html#title6).
+#' @param in_file netCDF file with chunking oriented to the maps of each date.
+#' @param out_file Chunks directory file.
+#' @export
+#' @examples
+#' write_nc_xy_chunk_dir_iter(in_file="/path/ETo-xy.nc", out_file="/path/ETo-xy.bin")
+write_nc_xy_chunk_dir_iter = function(in_file, out_file) {
+    # Find out name of main variable with ncdf4
+    nc_in_file = nc_open(in_file)
+    var_name = nc_in_file$var[[1]]$name
+    nc_close(nc_in_file)
+
+    # Open the netCDF file with hdf5r
+    nc_in_file = h5file(in_file, mode="r")
+
+    # Open a binary file in write mode
+    bin_out_file = file(out_file, "wb")
+
+    lon_num = nc_in_file[[var_name]]$dims[[1]]
+    lat_num = nc_in_file[[var_name]]$dims[[2]]
+    time_num = nc_in_file[[var_name]]$dims[[3]]
+
+    nc_in_file[[var_name]]$chunk_iter(function(chunk_info){
+        time_index = chunk_info$offset[[1]]
+        dir_pos = (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * time_index
+        seek(bin_out_file, dir_pos)
+        writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+        writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
+    })
 
     # Close files
     close(bin_out_file)
@@ -427,6 +506,8 @@ write_nc_xy_chunk_dir = function(in_file, out_file) {
 #file = file.path(nc_route, ncFile)
 #bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
 #write_nc_t_chunk_dir(in_file = file, out_file = bin_file)
+#  or
+#write_nc_t_chunk_dir_iter(in_file = file, out_file = bin_file)
 
 
 #nc_route = "/home/docker/workdir/proto_eto/viewer/nc"
@@ -434,3 +515,5 @@ write_nc_xy_chunk_dir = function(in_file, out_file) {
 #file = file.path(nc_route, ncFile)
 #bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
 #write_nc_xy_chunk_dir(in_file = file, out_file = bin_file)
+#  or
+#write_nc_xy_chunk_dir_iter(in_file = file, out_file = bin_file)

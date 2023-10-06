@@ -1,15 +1,15 @@
 #' @name Chunk
-#' @author 
+#' @author
 #' Borja Latorre Garcés \url{http://eead.csic.es/home/staffinfo?Id=215}; Soil and Water, EEAD, CSIC \url{http://www.eead.csic.es}
 #' Fergus Reig Gracia \url{http://fergusreig.es}; Environmental Hydrology, Climate and Human Activity Interactions, Geoenvironmental Processes, IPE, CSIC \url{http://www.ipe.csic.es/hidrologia-ambiental}
 #' Eduardo Moreno Lamana \url{https://apuntes.eduardofilo.es}; Environmental Hydrology, Climate and Human Activity Interactions, Geoenvironmental Processes, IPE, CSIC \url{http://www.ipe.csic.es/hidrologia-ambiental}
-#' 
+#'
 #' @details
 #' \tabular{ll}{
 #'   Version: \tab 1.0.0\cr
 #'   License: \tab GPL version 3 or newer\cr
 #' }
-#'  
+#'
 #' @description
 #' From a netCDF file, generate two versions with the same data but with different chunk
 #' configurations. In one case, favor the retrieval of temporal series of the main
@@ -37,8 +37,8 @@ library(ncdf4)
 library(hdf5r)
 
 # Constants
-OFFSET_TYPE_SIZE = 8
-SIZE_TYPE_SIZE = 4
+OFFSET_TYPE_SIZE <- 8
+SIZE_TYPE_SIZE <- 4
 
 #' Create the new netCDF file with chunk dimensions that favor obtaining temporal series
 #' for each pixel.
@@ -50,96 +50,102 @@ SIZE_TYPE_SIZE = 4
 #' @param lat_name Name of latitude dimension.
 #' @export
 #' @examples
-#' write_nc_chunk_t(in_file="/path/ETo.nc", out_file="/path/ETo-t.nc", lon_by=100, lat_by=100, lon_name = "lon", lat_name = "lat")
-write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1, lon_name = "lon", lat_name = "lat") {
-    # Open the original netCDF file
-    nc_in_file = nc_open(in_file)
+#' write_nc_chunk_t(in_file = "/path/ETo.nc", out_file = "/path/ETo-t.nc", lon_by = 100, lat_by = 100, lon_name = "lon", lat_name = "lat")
+write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_name = "lon", lat_name = "lat") {
+  # Open the original netCDF file
+  nc_in_file <- nc_open(in_file)
 
-    var_name = nc_in_file$var[[1]]$name
+  var_name <- nc_in_file$var[[1]]$name
 
-    # Reads global attributes
-    global_att = ncatt_get(nc_in_file, 0)
+  # Reads global attributes
+  global_att <- ncatt_get(nc_in_file, 0)
 
-    # Read attributes of dimensions and variable
-    lon_longname_att = ncatt_get(nc_in_file, lon_name, "long_name")
-    lon_longname = if(lon_longname_att$hasatt) lon_longname_att$value else "longitude"
-    lon_units_att = ncatt_get(nc_in_file, lon_name, "units")
-    lon_units = if(lon_units_att$hasatt) lon_units_att$value else "m"
+  # Read attributes of dimensions and variable
+  lon_longname_att <- ncatt_get(nc_in_file, lon_name, "long_name")
+  lon_longname <- if (lon_longname_att$hasatt) lon_longname_att$value else "longitude"
+  lon_units_att <- ncatt_get(nc_in_file, lon_name, "units")
+  lon_units <- if (lon_units_att$hasatt) lon_units_att$value else "m"
 
-    lat_longname_att = ncatt_get(nc_in_file, lat_name, "long_name")
-    lat_longname = if(lat_longname_att$hasatt) lat_longname_att$value else "latitude"
-    lat_units_att = ncatt_get(nc_in_file, lat_name, "units")
-    lat_units = if(lat_units_att$hasatt) lat_units_att$value else "m"
+  lat_longname_att <- ncatt_get(nc_in_file, lat_name, "long_name")
+  lat_longname <- if (lat_longname_att$hasatt) lat_longname_att$value else "latitude"
+  lat_units_att <- ncatt_get(nc_in_file, lat_name, "units")
+  lat_units <- if (lat_units_att$hasatt) lat_units_att$value else "m"
 
-    time_longname_att = ncatt_get(nc_in_file, "time", "long_name")
-    time_longname = if(time_longname_att$hasatt) time_longname_att$value else "time"
-    time_units_att = ncatt_get(nc_in_file, "time", "units")
-    time_units = if(time_units_att$hasatt) time_units_att$value else "days since 1970-01-01"
-    time_calendar_att = ncatt_get(nc_in_file, "time", "calendar")
-    time_calendar = if(time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
-    time_unlim = nc_in_file$dim$time$unlim
+  time_longname_att <- ncatt_get(nc_in_file, "time", "long_name")
+  time_longname <- if (time_longname_att$hasatt) time_longname_att$value else "time"
+  time_units_att <- ncatt_get(nc_in_file, "time", "units")
+  time_units <- if (time_units_att$hasatt) time_units_att$value else "days since 1970-01-01"
+  time_calendar_att <- ncatt_get(nc_in_file, "time", "calendar")
+  time_calendar <- if (time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
+  time_unlim <- nc_in_file$dim$time$unlim
 
-    var_longname_att = ncatt_get(nc_in_file, var_name, "long_name")
-    var_longname = if(var_longname_att$hasatt) var_longname_att$value else NULL
-    var_units_att = ncatt_get(nc_in_file, var_name, "units")
-    var_units = if(var_units_att$hasatt) var_units_att$value else ""
-    var_missval = nc_in_file$var[[var_name]]$missval
+  var_longname_att <- ncatt_get(nc_in_file, var_name, "long_name")
+  var_longname <- if (var_longname_att$hasatt) var_longname_att$value else NULL
+  var_units_att <- ncatt_get(nc_in_file, var_name, "units")
+  var_units <- if (var_units_att$hasatt) var_units_att$value else ""
+  var_missval <- nc_in_file$var[[var_name]]$missval
 
-    # Reads the dimensions of the original file
-    lon_data = ncvar_get(nc_in_file, lon_name)
-    lat_data = ncvar_get(nc_in_file, lat_name)
-    time_data = ncvar_get(nc_in_file, "time")
+  # Reads the dimensions of the original file
+  lon_data <- ncvar_get(nc_in_file, lon_name)
+  lat_data <- ncvar_get(nc_in_file, lat_name)
+  time_data <- ncvar_get(nc_in_file, "time")
 
-    # Sizes of dimensions
-    lon_num = length(lon_data)
-    lat_num = length(lat_data)
-    time_num = length(time_data)
+  # Sizes of dimensions
+  lon_num <- length(lon_data)
+  lat_num <- length(lat_data)
+  time_num <- length(time_data)
 
-    # Checks the size of the read/write batches used for processing large files
-    lon_by = if (lon_by < 1 || lon_by >= lon_num) lon_num else lon_by
-    lat_by = if (lat_by < 1 || lat_by >= lat_num) lat_num else lat_by
+  # Checks the size of the read/write batches used for processing large files
+  lon_by <- if (lon_by < 1 || lon_by >= lon_num) lon_num else lon_by
+  lat_by <- if (lat_by < 1 || lat_by >= lat_num) lat_num else lat_by
 
-    # Define the dimensions for the final file
-    lon = ncdim_def(lon_name, lon_units, lon_data, longname=lon_longname)
-    lat = ncdim_def(lat_name, lat_units, lat_data, longname=lat_longname)
-    time = ncdim_def("time", time_units, time_data, unlim=time_unlim,
-                     longname=time_longname, calendar=time_calendar)
-    args = list(name=var_name, units=var_units, dim=list(lon, lat, time),
-                chunksizes=c(1,1,time_num), compression=9)
-    if (!is.null(var_longname))
-        args$longname = var_longname
-    if (!is.null(var_missval))
-        args$missval = var_missval
-    var = do.call(ncvar_def, args)
+  # Define the dimensions for the final file
+  lon <- ncdim_def(lon_name, lon_units, lon_data, longname = lon_longname)
+  lat <- ncdim_def(lat_name, lat_units, lat_data, longname = lat_longname)
+  time <- ncdim_def("time", time_units, time_data,
+    unlim = time_unlim,
+    longname = time_longname, calendar = time_calendar
+  )
+  args <- list(
+    name = var_name, units = var_units, dim = list(lon, lat, time),
+    chunksizes = c(1, 1, time_num), compression = 9
+  )
+  if (!is.null(var_longname)) {
+    args$longname <- var_longname
+  }
+  if (!is.null(var_missval)) {
+    args$missval <- var_missval
+  }
+  var <- do.call(ncvar_def, args)
 
-    # Final file creation
-    nc_out_file = nc_create(out_file, list(var), force_v4 = TRUE)
+  # Final file creation
+  nc_out_file <- nc_create(out_file, list(var), force_v4 = TRUE)
 
-    if (lon_by == lon_num && lat_by == lat_num) {
-        # Read/write data at once
-        var_data = ncvar_get(nc_in_file, var)
-        ncvar_put(nc_out_file, var, var_data)
-    } else {
-        # Read/write data in batches
-        for (x in seq(1, lon_num, by=lon_by)) {
-            x_rest = lon_num - x + 1
-            x_count = if (x_rest >= lon_by) lon_by else x_rest
-            for (y in seq(1, lat_num, by=lat_by)) {
-                y_rest = lat_num - y + 1
-                y_count = if (y_rest >= lat_by) lat_by else y_rest
-                var_data = ncvar_get(nc_in_file, var, start=c(x,y,1), count=c(x_count,y_count,time_num))
-                ncvar_put(nc_out_file, var, var_data, start=c(x,y,1), count=c(x_count,y_count,time_num))
-            }
-        }
+  if (lon_by == lon_num && lat_by == lat_num) {
+    # Read/write data at once
+    var_data <- ncvar_get(nc_in_file, var)
+    ncvar_put(nc_out_file, var, var_data)
+  } else {
+    # Read/write data in batches
+    for (x in seq(1, lon_num, by = lon_by)) {
+      x_rest <- lon_num - x + 1
+      x_count <- if (x_rest >= lon_by) lon_by else x_rest
+      for (y in seq(1, lat_num, by = lat_by)) {
+        y_rest <- lat_num - y + 1
+        y_count <- if (y_rest >= lat_by) lat_by else y_rest
+        var_data <- ncvar_get(nc_in_file, var, start = c(x, y, 1), count = c(x_count, y_count, time_num))
+        ncvar_put(nc_out_file, var, var_data, start = c(x, y, 1), count = c(x_count, y_count, time_num))
+      }
     }
+  }
 
-    # Writes the global attributes to the final file
-    for (name in names(global_att)) {
-        ncatt_put(nc_out_file, 0, name, global_att[[name]])
-    }
+  # Writes the global attributes to the final file
+  for (name in names(global_att)) {
+    ncatt_put(nc_out_file, 0, name, global_att[[name]])
+  }
 
-    nc_close(nc_out_file)
-    nc_close(nc_in_file)
+  nc_close(nc_out_file)
+  nc_close(nc_in_file)
 }
 
 
@@ -151,91 +157,97 @@ write_nc_chunk_t = function(in_file, out_file, lon_by = -1, lat_by = -1, lon_nam
 #' @param lat_name Name of latitude dimension.
 #' @export
 #' @examples
-#' write_nc_chunk_xy(in_file="/path/ETo.nc", out_file="/path/ETo-xy.nc", time_by=100, lon_name = "lon", lat_name = "lat")
-write_nc_chunk_xy = function(in_file, out_file, time_by = -1, lon_name = "lon", lat_name = "lat") {
-    # Open the original netCDF file
-    nc_in_file = nc_open(in_file)
+#' write_nc_chunk_xy(in_file = "/path/ETo.nc", out_file = "/path/ETo-xy.nc", time_by = 100, lon_name = "lon", lat_name = "lat")
+write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon", lat_name = "lat") {
+  # Open the original netCDF file
+  nc_in_file <- nc_open(in_file)
 
-    var_name = nc_in_file$var[[1]]$name
+  var_name <- nc_in_file$var[[1]]$name
 
-    # Reads global attributes
-    global_att = ncatt_get(nc_in_file, 0)
+  # Reads global attributes
+  global_att <- ncatt_get(nc_in_file, 0)
 
-    # Read attributes of dimensions and variable
-    lon_longname_att = ncatt_get(nc_in_file, lon_name, "long_name")
-    lon_longname = if(lon_longname_att$hasatt) lon_longname_att$value else "longitude"
-    lon_units_att = ncatt_get(nc_in_file, lon_name, "units")
-    lon_units = if(lon_units_att$hasatt) lon_units_att$value else "m"
+  # Read attributes of dimensions and variable
+  lon_longname_att <- ncatt_get(nc_in_file, lon_name, "long_name")
+  lon_longname <- if (lon_longname_att$hasatt) lon_longname_att$value else "longitude"
+  lon_units_att <- ncatt_get(nc_in_file, lon_name, "units")
+  lon_units <- if (lon_units_att$hasatt) lon_units_att$value else "m"
 
-    lat_longname_att = ncatt_get(nc_in_file, lat_name, "long_name")
-    lat_longname = if(lat_longname_att$hasatt) lat_longname_att$value else "latitude"
-    lat_units_att = ncatt_get(nc_in_file, lat_name, "units")
-    lat_units = if(lat_units_att$hasatt) lat_units_att$value else "m"
+  lat_longname_att <- ncatt_get(nc_in_file, lat_name, "long_name")
+  lat_longname <- if (lat_longname_att$hasatt) lat_longname_att$value else "latitude"
+  lat_units_att <- ncatt_get(nc_in_file, lat_name, "units")
+  lat_units <- if (lat_units_att$hasatt) lat_units_att$value else "m"
 
-    time_longname_att = ncatt_get(nc_in_file, "time", "long_name")
-    time_longname = if(time_longname_att$hasatt) time_longname_att$value else "time"
-    time_units_att = ncatt_get(nc_in_file, "time", "units")
-    time_units = if(time_units_att$hasatt) time_units_att$value else "days since 1970-01-01"
-    time_calendar_att = ncatt_get(nc_in_file, "time", "calendar")
-    time_calendar = if(time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
-    time_unlim = nc_in_file$dim$time$unlim
+  time_longname_att <- ncatt_get(nc_in_file, "time", "long_name")
+  time_longname <- if (time_longname_att$hasatt) time_longname_att$value else "time"
+  time_units_att <- ncatt_get(nc_in_file, "time", "units")
+  time_units <- if (time_units_att$hasatt) time_units_att$value else "days since 1970-01-01"
+  time_calendar_att <- ncatt_get(nc_in_file, "time", "calendar")
+  time_calendar <- if (time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
+  time_unlim <- nc_in_file$dim$time$unlim
 
-    var_longname_att = ncatt_get(nc_in_file, var_name, "long_name")
-    var_longname = if(var_longname_att$hasatt) var_longname_att$value else NULL
-    var_units_att = ncatt_get(nc_in_file, var_name, "units")
-    var_units = if(var_units_att$hasatt) var_units_att$value else ""
-    var_missval = nc_in_file$var[[var_name]]$missval
+  var_longname_att <- ncatt_get(nc_in_file, var_name, "long_name")
+  var_longname <- if (var_longname_att$hasatt) var_longname_att$value else NULL
+  var_units_att <- ncatt_get(nc_in_file, var_name, "units")
+  var_units <- if (var_units_att$hasatt) var_units_att$value else ""
+  var_missval <- nc_in_file$var[[var_name]]$missval
 
-    # Reads the dimensions of the original file
-    lon_data = ncvar_get(nc_in_file, lon_name)
-    lat_data = ncvar_get(nc_in_file, lat_name)
-    time_data = ncvar_get(nc_in_file, "time")
+  # Reads the dimensions of the original file
+  lon_data <- ncvar_get(nc_in_file, lon_name)
+  lat_data <- ncvar_get(nc_in_file, lat_name)
+  time_data <- ncvar_get(nc_in_file, "time")
 
-    # Sizes of dimensions
-    lon_num = length(lon_data)
-    lat_num = length(lat_data)
-    time_num = length(time_data)
+  # Sizes of dimensions
+  lon_num <- length(lon_data)
+  lat_num <- length(lat_data)
+  time_num <- length(time_data)
 
-    # Checks the size of the read/write batches used for processing large files
-    time_by = if (time_by < 1 || time_by >= time_num) time_num else time_by
- 
-    # Define the dimensions for the final file
-    lon = ncdim_def(lon_name, lon_units, lon_data, longname=lon_longname)
-    lat = ncdim_def(lat_name, lat_units, lat_data, longname=lat_longname)
-    time = ncdim_def("time", time_units, time_data, unlim=time_unlim,
-                     longname=time_longname, calendar=time_calendar)
-    args = list(name=var_name, units=var_units, dim=list(lon, lat, time),
-                chunksizes=c(lon_num,lat_num,1), compression=9)
-    if (!is.null(var_longname))
-        args$longname = var_longname
-    if (!is.null(var_missval))
-        args$missval = var_missval
-    var = do.call(ncvar_def, args)
+  # Checks the size of the read/write batches used for processing large files
+  time_by <- if (time_by < 1 || time_by >= time_num) time_num else time_by
 
-    # Final file creation
-    nc_out_file = nc_create(out_file, list(var), force_v4 = TRUE)
+  # Define the dimensions for the final file
+  lon <- ncdim_def(lon_name, lon_units, lon_data, longname = lon_longname)
+  lat <- ncdim_def(lat_name, lat_units, lat_data, longname = lat_longname)
+  time <- ncdim_def("time", time_units, time_data,
+    unlim = time_unlim,
+    longname = time_longname, calendar = time_calendar
+  )
+  args <- list(
+    name = var_name, units = var_units, dim = list(lon, lat, time),
+    chunksizes = c(lon_num, lat_num, 1), compression = 9
+  )
+  if (!is.null(var_longname)) {
+    args$longname <- var_longname
+  }
+  if (!is.null(var_missval)) {
+    args$missval <- var_missval
+  }
+  var <- do.call(ncvar_def, args)
 
-    if (time_by == time_num) {
-        # Read/write data at once
-        var_data = ncvar_get(nc_in_file, var)
-        ncvar_put(nc_out_file, var, var_data)
-    } else {
-        # Read/write data in batches
-        for (t in seq(1, time_num, by=time_by)) {
-            t_rest = time_num - t + 1
-            t_count = if (t_rest >= time_by) time_by else t_rest
-            var_data = ncvar_get(nc_in_file, var, start=c(1,1,t), count=c(lon_num,lat_num,t_count))
-            ncvar_put(nc_out_file, var, var_data, start=c(1,1,t), count=c(lon_num,lat_num,t_count))
-        }
+  # Final file creation
+  nc_out_file <- nc_create(out_file, list(var), force_v4 = TRUE)
+
+  if (time_by == time_num) {
+    # Read/write data at once
+    var_data <- ncvar_get(nc_in_file, var)
+    ncvar_put(nc_out_file, var, var_data)
+  } else {
+    # Read/write data in batches
+    for (t in seq(1, time_num, by = time_by)) {
+      t_rest <- time_num - t + 1
+      t_count <- if (t_rest >= time_by) time_by else t_rest
+      var_data <- ncvar_get(nc_in_file, var, start = c(1, 1, t), count = c(lon_num, lat_num, t_count))
+      ncvar_put(nc_out_file, var, var_data, start = c(1, 1, t), count = c(lon_num, lat_num, t_count))
     }
+  }
 
-    # Writes the global attributes to the final file
-    for (name in names(global_att)) {
-        ncatt_put(nc_out_file, 0, name, global_att[[name]])
-    }
+  # Writes the global attributes to the final file
+  for (name in names(global_att)) {
+    ncatt_put(nc_out_file, 0, name, global_att[[name]])
+  }
 
-    nc_close(nc_out_file)
-    nc_close(nc_in_file)
+  nc_close(nc_out_file)
+  nc_close(nc_in_file)
 }
 
 
@@ -246,14 +258,14 @@ write_nc_chunk_xy = function(in_file, out_file, time_by = -1, lon_name = "lon", 
 #' @return New filename
 #' @export
 #' @examples
-#' create_nc_name(file_name="ETo.nc", sufix="-t", ext=".bin")
-create_nc_name = function(file_name, sufix="-t", ext="") {
-    pos = unlist(gregexpr(".nc", file_name))
-    ext_pos = pos[length(pos)]
-    if (ext == "") {
-        ext = substr(file_name, ext_pos, nchar(file_name))
-    }
-    return(paste0(substr(file_name, 1, ext_pos-1), sufix, ext))
+#' create_nc_name(file_name = "ETo.nc", sufix = "-t", ext = ".bin")
+create_nc_name <- function(file_name, sufix = "-t", ext = "") {
+  pos <- unlist(gregexpr(".nc", file_name))
+  ext_pos <- pos[length(pos)]
+  if (ext == "") {
+    ext <- substr(file_name, ext_pos, nchar(file_name))
+  }
+  return(paste0(substr(file_name, 1, ext_pos - 1), sufix, ext))
 }
 
 
@@ -262,15 +274,14 @@ create_nc_name = function(file_name, sufix="-t", ext="") {
 #' @param nc_type netCDF data type
 #' @return struct data type
 #' @examples
-#' get_struct_typecode(nc_type="double")
-get_struct_typecode = function(nc_type) {
-    result = switch(
-        nc_type,
-        "float"= "f",
-        "double"= "d",
-        "int"= "i"
-    )
-    return(result)
+#' get_struct_typecode(nc_type = "double")
+get_struct_typecode <- function(nc_type) {
+  result <- switch(nc_type,
+    "float" = "f",
+    "double" = "d",
+    "int" = "i"
+  )
+  return(result)
 }
 
 
@@ -281,123 +292,123 @@ get_struct_typecode = function(nc_type) {
 #' @param lat_name Name of latitude dimension.
 #' @export
 #' @examples
-#' write_nc_env(in_file="/path/ETo.nc", out_file="/path/ncEnv.js", lon_name = "lon", lat_name = "lat")
-write_nc_env = function(in_file, out_file, lon_name = "lon", lat_name = "lat") {
-    # Open the original netCDF file
-    nc_in_file = nc_open(in_file)
+#' write_nc_env(in_file = "/path/ETo.nc", out_file = "/path/ncEnv.js", lon_name = "lon", lat_name = "lat")
+write_nc_env <- function(in_file, out_file, lon_name = "lon", lat_name = "lat") {
+  # Open the original netCDF file
+  nc_in_file <- nc_open(in_file)
 
-    write("var ncEnv = {", out_file)
-    var_name = nc_in_file$var[[1]]$name
-    write(paste0("    \"var_name\": \"", var_name, "\","), out_file, append=TRUE)
-    lon_data = ncvar_get(nc_in_file, lon_name)
-    lon_min = lon_data[1]
-    write(paste0("    \"lon_min\": ", lon_min, ","), out_file, append=TRUE)
-    lon_max = lon_data[length(lon_data)]
-    write(paste0("    \"lon_max\": ", lon_max, ","), out_file, append=TRUE)
-    lon_num = length(lon_data)
-    write(paste0("    \"lon_num\": ", lon_num, ","), out_file, append=TRUE)
-    lat_data = ncvar_get(nc_in_file, lat_name)
-    lat_min = lat_data[1]
-    write(paste0("    \"lat_min\": ", lat_min, ","), out_file, append=TRUE)
-    lat_max = lat_data[length(lat_data)]
-    write(paste0("    \"lat_max\": ", lat_max, ","), out_file, append=TRUE)
-    lat_num = length(lat_data)
-    write(paste0("    \"lat_num\": ", lat_num, ","), out_file, append=TRUE)
-    time_data = ncvar_get(nc_in_file, "time")
-    time_min = time_data[1]
-    write(paste0("    \"time_min\": ", time_min, ","), out_file, append=TRUE)
-    time_max = time_data[length(time_data)]
-    write(paste0("    \"time_max\": ", time_max, ","), out_file, append=TRUE)
-    time_num = length(time_data)
-    write(paste0("    \"time_num\": ", time_num, ","), out_file, append=TRUE)
-    var_type = get_struct_typecode(nc_in_file$var[[1]]$prec)
-    write(paste0("    \"var_type\": \"", var_type, "\","), out_file, append=TRUE)
-    compressed = if(is.na(nc_in_file$var[[1]]$compression)) "false" else "true"
-    write(paste0("    \"compressed\": ", compressed, ","), out_file, append=TRUE)
-    offset_type = "Q"
-    write(paste0("    \"offset_type\": \"", offset_type, "\","), out_file, append=TRUE)
-    size_type = "I"
-    write(paste0("    \"size_type\": \"", size_type, "\","), out_file, append=TRUE)
-    projection = "+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs"
-    write(paste0("    \"projection\": \"", projection, "\""), out_file, append=TRUE)
-    write("}", out_file, append=TRUE)
+  write("var ncEnv = {", out_file)
+  var_name <- nc_in_file$var[[1]]$name
+  write(paste0("    \"var_name\": \"", var_name, "\","), out_file, append = TRUE)
+  lon_data <- ncvar_get(nc_in_file, lon_name)
+  lon_min <- lon_data[1]
+  write(paste0("    \"lon_min\": ", lon_min, ","), out_file, append = TRUE)
+  lon_max <- lon_data[length(lon_data)]
+  write(paste0("    \"lon_max\": ", lon_max, ","), out_file, append = TRUE)
+  lon_num <- length(lon_data)
+  write(paste0("    \"lon_num\": ", lon_num, ","), out_file, append = TRUE)
+  lat_data <- ncvar_get(nc_in_file, lat_name)
+  lat_min <- lat_data[1]
+  write(paste0("    \"lat_min\": ", lat_min, ","), out_file, append = TRUE)
+  lat_max <- lat_data[length(lat_data)]
+  write(paste0("    \"lat_max\": ", lat_max, ","), out_file, append = TRUE)
+  lat_num <- length(lat_data)
+  write(paste0("    \"lat_num\": ", lat_num, ","), out_file, append = TRUE)
+  time_data <- ncvar_get(nc_in_file, "time")
+  time_min <- time_data[1]
+  write(paste0("    \"time_min\": ", time_min, ","), out_file, append = TRUE)
+  time_max <- time_data[length(time_data)]
+  write(paste0("    \"time_max\": ", time_max, ","), out_file, append = TRUE)
+  time_num <- length(time_data)
+  write(paste0("    \"time_num\": ", time_num, ","), out_file, append = TRUE)
+  var_type <- get_struct_typecode(nc_in_file$var[[1]]$prec)
+  write(paste0("    \"var_type\": \"", var_type, "\","), out_file, append = TRUE)
+  compressed <- if (is.na(nc_in_file$var[[1]]$compression)) "false" else "true"
+  write(paste0("    \"compressed\": ", compressed, ","), out_file, append = TRUE)
+  offset_type <- "Q"
+  write(paste0("    \"offset_type\": \"", offset_type, "\","), out_file, append = TRUE)
+  size_type <- "I"
+  write(paste0("    \"size_type\": \"", size_type, "\","), out_file, append = TRUE)
+  projection <- "+proj=utm +zone=30 +ellps=GRS80 +units=m +no_defs"
+  write(paste0("    \"projection\": \"", projection, "\""), out_file, append = TRUE)
+  write("}", out_file, append = TRUE)
 
-    nc_close(nc_in_file)
+  nc_close(nc_in_file)
 }
 
 
 #' Create the binary chunks directory for the nc oriented to the time series of each pixel.
-#' @param in_file netCDF file with chunking oriented to the time series of each pixel. 
+#' @param in_file netCDF file with chunking oriented to the time series of each pixel.
 #' @param out_file Chunks directory file.
 #' @export
 #' @examples
-#' write_nc_t_chunk_dir(in_file="/path/ETo-t.nc", out_file="/path/ETo-t.bin")
-write_nc_t_chunk_dir = function(in_file, out_file) {
-    # Find out name of main variable with ncdf4
-    nc_in_file = nc_open(in_file)
-    var_name = nc_in_file$var[[1]]$name
-    nc_close(nc_in_file)
+#' write_nc_t_chunk_dir(in_file = "/path/ETo-t.nc", out_file = "/path/ETo-t.bin")
+write_nc_t_chunk_dir <- function(in_file, out_file) {
+  # Find out name of main variable with ncdf4
+  nc_in_file <- nc_open(in_file)
+  var_name <- nc_in_file$var[[1]]$name
+  nc_close(nc_in_file)
 
-    # Open the netCDF file with hdf5r
-    nc_in_file = h5file(in_file, mode="r")
+  # Open the netCDF file with hdf5r
+  nc_in_file <- h5file(in_file, mode = "r")
 
-    # Open a binary file in write mode
-    bin_out_file = file(out_file, "wb")
+  # Open a binary file in write mode
+  bin_out_file <- file(out_file, "wb")
 
-    lon_num = nc_in_file[[var_name]]$dims[[1]]
-    lat_num = nc_in_file[[var_name]]$dims[[2]]
-    time_num = nc_in_file[[var_name]]$dims[[3]]
+  lon_num <- nc_in_file[[var_name]]$dims[[1]]
+  lat_num <- nc_in_file[[var_name]]$dims[[2]]
+  time_num <- nc_in_file[[var_name]]$dims[[3]]
 
-    for (y in seq(1, lat_num)) {
-        for (x in seq(1, lon_num)) {
-            chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(0,y-1,x-1))
-            # Write the number pairs to the binary file
-            writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
-            writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
-        }
+  for (y in seq(1, lat_num)) {
+    for (x in seq(1, lon_num)) {
+      chunk_info <- nc_in_file[[var_name]]$get_chunk_info_by_coord(c(0, y - 1, x - 1))
+      # Write the number pairs to the binary file
+      writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+      writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
     }
+  }
 
-    # Close files
-    close(bin_out_file)
-    nc_in_file$close()
+  # Close files
+  close(bin_out_file)
+  nc_in_file$close()
 }
 
 
 #' Create the binary chunks directory for the nc oriented to the time series of each pixel
 #' using the new H5Dchunk_iter function (https://docs.hdfgroup.org/hdf5/v1_14/group___h5_d.html#title6).
-#' @param in_file netCDF file with chunking oriented to the time series of each pixel. 
+#' @param in_file netCDF file with chunking oriented to the time series of each pixel.
 #' @param out_file Chunks directory file.
 #' @export
 #' @examples
-#' write_nc_t_chunk_dir_iter(in_file="/path/ETo-t.nc", out_file="/path/ETo-t.bin")
-write_nc_t_chunk_dir_iter = function(in_file, out_file) {
-    # Find out name of main variable with ncdf4
-    nc_in_file = nc_open(in_file)
-    var_name = nc_in_file$var[[1]]$name
-    nc_close(nc_in_file)
+#' write_nc_t_chunk_dir_iter(in_file = "/path/ETo-t.nc", out_file = "/path/ETo-t.bin")
+write_nc_t_chunk_dir_iter <- function(in_file, out_file) {
+  # Find out name of main variable with ncdf4
+  nc_in_file <- nc_open(in_file)
+  var_name <- nc_in_file$var[[1]]$name
+  nc_close(nc_in_file)
 
-    # Open the netCDF file with hdf5r
-    nc_in_file = h5file(in_file, mode="r")
+  # Open the netCDF file with hdf5r
+  nc_in_file <- h5file(in_file, mode = "r")
 
-    # Open a binary file in write mode
-    bin_out_file = file(out_file, "wb")
+  # Open a binary file in write mode
+  bin_out_file <- file(out_file, "wb")
 
-    lon_num = nc_in_file[[var_name]]$dims[[1]]
-    lat_num = nc_in_file[[var_name]]$dims[[2]]
-    time_num = nc_in_file[[var_name]]$dims[[3]]
+  lon_num <- nc_in_file[[var_name]]$dims[[1]]
+  lat_num <- nc_in_file[[var_name]]$dims[[2]]
+  time_num <- nc_in_file[[var_name]]$dims[[3]]
 
-    nc_in_file[[var_name]]$chunk_iter(function(chunk_info){
-        lat_index = chunk_info$offset[[2]]
-        lon_index = chunk_info$offset[[3]]
-        dir_pos = (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * (lon_index + lat_index * lon_num)
-        seek(bin_out_file, dir_pos)
-        writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
-        writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
-    })
+  nc_in_file[[var_name]]$chunk_iter(function(chunk_info) {
+    lat_index <- chunk_info$offset[[2]]
+    lon_index <- chunk_info$offset[[3]]
+    dir_pos <- (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * (lon_index + lat_index * lon_num)
+    seek(bin_out_file, dir_pos)
+    writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+    writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
+  })
 
-    # Close files
-    close(bin_out_file)
-    nc_in_file$close()
+  # Close files
+  close(bin_out_file)
+  nc_in_file$close()
 }
 
 
@@ -406,33 +417,29 @@ write_nc_t_chunk_dir_iter = function(in_file, out_file) {
 #' @param out_file Chunks directory file.
 #' @export
 #' @examples
-#' write_nc_xy_chunk_dir(in_file="/path/ETo-xy.nc", out_file="/path/ETo-xy.bin")
-write_nc_xy_chunk_dir = function(in_file, out_file) {
-    # Find out name of main variable with ncdf4
-    nc_in_file = nc_open(in_file)
-    var_name = nc_in_file$var[[1]]$name
-    nc_close(nc_in_file)
+#' write_nc_xy_chunk_dir(in_file = "/path/ETo-xy.nc", out_file = "/path/ETo-xy.bin")
+write_nc_xy_chunk_dir <- function(in_file, out_file) {
+  # Find out name of main variable with ncdf4
+  nc_in_file <- nc_open(in_file)
+  var_name <- nc_in_file$var[[1]]$name
+  nc_close(nc_in_file)
 
-    # Open the netCDF file with hdf5r
-    nc_in_file = h5file(in_file, mode="r")
+  # Open the netCDF file with hdf5r
+  nc_in_file <- h5file(in_file, mode = "r")
 
-    # Open a binary file in write mode
-    bin_out_file = file(out_file, "wb")
+  # Open a binary file in write mode
+  bin_out_file <- file(out_file, "wb")
 
-    lon_num = nc_in_file[[var_name]]$dims[[1]]
-    lat_num = nc_in_file[[var_name]]$dims[[2]]
-    time_num = nc_in_file[[var_name]]$dims[[3]]
+  for (t in seq(1, time_num)) {
+    chunk_info <- nc_in_file[[var_name]]$get_chunk_info_by_coord(c(t - 1, 0, 0))
+    # Write the number pairs to the binary file
+    writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+    writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
+  }
 
-    for (t in seq(1, time_num)) {
-        chunk_info = nc_in_file[[var_name]]$get_chunk_info_by_coord(c(t-1,0,0))
-        # Write the number pairs to the binary file
-        writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
-        writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
-    }
-
-    # Close files
-    close(bin_out_file)
-    nc_in_file$close()
+  # Close files
+  close(bin_out_file)
+  nc_in_file$close()
 }
 
 
@@ -442,34 +449,30 @@ write_nc_xy_chunk_dir = function(in_file, out_file) {
 #' @param out_file Chunks directory file.
 #' @export
 #' @examples
-#' write_nc_xy_chunk_dir_iter(in_file="/path/ETo-xy.nc", out_file="/path/ETo-xy.bin")
-write_nc_xy_chunk_dir_iter = function(in_file, out_file) {
-    # Find out name of main variable with ncdf4
-    nc_in_file = nc_open(in_file)
-    var_name = nc_in_file$var[[1]]$name
-    nc_close(nc_in_file)
+#' write_nc_xy_chunk_dir_iter(in_file = "/path/ETo-xy.nc", out_file = "/path/ETo-xy.bin")
+write_nc_xy_chunk_dir_iter <- function(in_file, out_file) {
+  # Find out name of main variable with ncdf4
+  nc_in_file <- nc_open(in_file)
+  var_name <- nc_in_file$var[[1]]$name
+  nc_close(nc_in_file)
 
-    # Open the netCDF file with hdf5r
-    nc_in_file = h5file(in_file, mode="r")
+  # Open the netCDF file with hdf5r
+  nc_in_file <- h5file(in_file, mode = "r")
 
-    # Open a binary file in write mode
-    bin_out_file = file(out_file, "wb")
+  # Open a binary file in write mode
+  bin_out_file <- file(out_file, "wb")
 
-    lon_num = nc_in_file[[var_name]]$dims[[1]]
-    lat_num = nc_in_file[[var_name]]$dims[[2]]
-    time_num = nc_in_file[[var_name]]$dims[[3]]
+  nc_in_file[[var_name]]$chunk_iter(function(chunk_info) {
+    time_index <- chunk_info$offset[[1]]
+    dir_pos <- (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * time_index
+    seek(bin_out_file, dir_pos)
+    writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+    writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
+  })
 
-    nc_in_file[[var_name]]$chunk_iter(function(chunk_info){
-        time_index = chunk_info$offset[[1]]
-        dir_pos = (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * time_index
-        seek(bin_out_file, dir_pos)
-        writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
-        writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
-    })
-
-    # Close files
-    close(bin_out_file)
-    nc_in_file$close()
+  # Close files
+  close(bin_out_file)
+  nc_in_file$close()
 }
 
 
@@ -501,19 +504,19 @@ write_nc_xy_chunk_dir_iter = function(in_file, out_file) {
 # write_nc_env(in_file=file, out_file=envFile)
 
 
-#nc_route = "/home/docker/workdir/proto_eto/viewer/nc"
-#ncFile = "ETo-t.nc"
-#file = file.path(nc_route, ncFile)
-#bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
-#write_nc_t_chunk_dir(in_file = file, out_file = bin_file)
+# nc_route = "/home/docker/workdir/proto_eto/viewer/nc"
+# ncFile = "ETo-t.nc"
+# file = file.path(nc_route, ncFile)
+# bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
+# write_nc_t_chunk_dir(in_file = file, out_file = bin_file)
 #  or
-#write_nc_t_chunk_dir_iter(in_file = file, out_file = bin_file)
+# write_nc_t_chunk_dir_iter(in_file = file, out_file = bin_file)
 
 
-#nc_route = "/home/docker/workdir/proto_eto/viewer/nc"
-#ncFile = "ETo-xy.nc"
-#file = file.path(nc_route, ncFile)
-#bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
-#write_nc_xy_chunk_dir(in_file = file, out_file = bin_file)
+# nc_route = "/home/docker/workdir/proto_eto/viewer/nc"
+# ncFile = "ETo-xy.nc"
+# file = file.path(nc_route, ncFile)
+# bin_file = file.path(nc_route, create_nc_name(ncFile, ext="bin"))
+# write_nc_xy_chunk_dir(in_file = file, out_file = bin_file)
 #  or
-#write_nc_xy_chunk_dir_iter(in_file = file, out_file = bin_file)
+# write_nc_xy_chunk_dir_iter(in_file = file, out_file = bin_file)

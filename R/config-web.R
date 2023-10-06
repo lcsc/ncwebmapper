@@ -58,35 +58,41 @@ library(raster)
 #' @param varName varName
 #' @param write true si se escribe el fichero js al terminar la ejecución; implica que la web solo muestra un "mapa"; en otro caso se supone que la web tendrá más de un mapa
 #' @param zoom zoom
+#' @param lon_name lon_name
+#' @param lat_name lat_name
+#' @param time_name time_name
 #' @export
-config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, lonIni, latEnd, lonEnd, timeIni, timeEnd, varmin, varmax, varName, infoJs = NA, legend="NaN", write=TRUE, zoom){
-
-  if(missing(infoJs) || sum(!is.na(infoJs))==0)
-  {
-    infoJs <- list(mapMinZoom=2, mapMaxZoom=NA, legend=legend, varMin=NA, varMax=NA, levelcsv=NA, times=list(), latM=NA, lonM=NA, latIni=NA, latEnd=NA, lonIni=NA, lonEnd=NA)
+config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, lonIni, latEnd, lonEnd, timeIni, timeEnd, varmin, varmax, varName, infoJs = NA, legend = "NaN", write = TRUE, zoom, lon_name = "lon", lat_name = "lat", time_name = "time") {
+  if (missing(infoJs) || sum(!is.na(infoJs)) == 0) {
+    infoJs <- list(mapMinZoom = 2, mapMaxZoom = NA, legend = legend,
+                   varMin = NA, varMax = NA, levelcsv = NA, times = list(),
+                   latM = NA, lonM = NA, latIni = NA, latEnd = NA,
+                   lonIni = NA, lonEnd = NA,
+                   lonMin = list(), lonMax = list(), lonNum = list(),
+                   latMin = list(), latMax = list(), latNum = list(),
+                   timeMin = list(), timeMax = list(), timeNum = list(),
+                   varType = "f", compressed = TRUE)
   }
 
-  if(!missing(file)){
+  if (!missing(file)) {
     # open nc
     nc <- nc_open(file)
   }
 
-  if(missing(varName)){
-    if(!missing(file)){
+  if (missing(varName)) {
+    if (!missing(file)) {
       # nc name
       varName <- basename(gsub(".nc", "", file))
     }
-    if(missing(file) | write){
+    if (missing(file) | write) {
       varName <- "NaN"
     }
   }
 
   # read epsg
-  if(missing(epsg))
-  {
+  if (missing(epsg)) {
     epsg <- read_epsg(nc)
-    if(epsg == 0)
-    {
+    if (epsg == 0) {
       cat("Error: EPSG not found\n")
       return()
     }
@@ -95,8 +101,7 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
   dir.create(folder, showWarnings = FALSE, recursive = TRUE)
 
   # Márgenes del mapa
-  if(missing(latIni) | missing(latEnd) | missing(lonIni) | missing(lonEnd))
-  {
+  if (missing(latIni) | missing(latEnd) | missing(lonIni) | missing(lonEnd)) {
     coords <- read_coords(nc, epsg)
 
     latIni <- min(coords[, 2])
@@ -105,7 +110,7 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
     lonEnd <- max(coords[, 1])
   }
 
-  if(!is.na(infoJs$latIni) & !is.na(infoJs$latEnd) & !is.na(infoJs$lonIni) & !is.na(infoJs$lonEnd)){
+  if (!is.na(infoJs$latIni) & !is.na(infoJs$latEnd) & !is.na(infoJs$lonIni) & !is.na(infoJs$lonEnd)) {
     latIni <- min(latIni, infoJs$latIni)
     latEnd <- max(latEnd, infoJs$latEnd)
     lonIni <- min(lonIni, infoJs$lonIni)
@@ -122,60 +127,58 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
   infoJs$lonM <- mean(c(lonIni, lonEnd))
 
   # Tiempos disponibles
-  if(!missing(timeIni) & !missing(timeEnd)){
-    times.write <- seq(as.Date(timeIni), as.Date(timeEnd), by=1)
-    if(!missing(formatdates)){
+  if (!missing(timeIni) & !missing(timeEnd)) {
+    times.write <- seq(as.Date(timeIni), as.Date(timeEnd), by = 1)
+    if (!missing(formatdates)) {
       times.write <- format(times.write, formatdates)
     }
-  }else{
-    if(missing(dates))
-    {
-      if(!missing(formatdates)){
+  } else {
+    if (missing(dates)) {
+      if (!missing(formatdates)) {
         times.write <- read_times(nc, formatdates)
-      }else{
+      } else {
         times.write <- read_times(nc)
-      }  
-    }else{
+      }
+    } else {
       times.write <- dates
     }
   }
 
-  if(missing(varmin) | missing(varmax)) {
-    varMinMax = readMinMax(nc)
-    varmin = varMinMax$min
-    varmax = varMinMax$max
-  }else{
-    if(!missing(file)){
-      varmin = array(varmin, dim=length(nc$dim[[timePosition(nc)]]$vals))
-      varmax = array(varmax, dim=length(nc$dim[[timePosition(nc)]]$vals))
+  if (missing(varmin) | missing(varmax)) {
+    varMinMax <- readMinMax(nc)
+    varmin <- varMinMax$min
+    varmax <- varMinMax$max
+  } else {
+    if (!missing(file)) {
+      varmin <- array(varmin, dim = length(nc$dim[[timePosition(nc)]]$vals))
+      varmax <- array(varmax, dim = length(nc$dim[[timePosition(nc)]]$vals))
     }
   }
   # Delete Inf
-  aux = varmin == Inf | varmin == -Inf | varmax == Inf | varmax == -Inf
+  aux <- varmin == Inf | varmin == -Inf | varmax == Inf | varmax == -Inf
 
-  varmin[aux] = 0
-  varmax[aux] = 100
-  positions = 1:length(varmin)
+  varmin[aux] <- 0
+  varmax[aux] <- 100
+  positions <- 1:length(varmin)
 
-  if(!is.null(infoJs$times[[varName]])){
-    if(length(times.write)==sum(times.write%in%infoJs$times[[varName]])){
-      positions = match(times.write, infoJs$times[[varName]])
-      times.write = infoJs$times[[varName]]
+  if (!is.null(infoJs$times[[varName]])) {
+    if (length(times.write) == sum(times.write %in% infoJs$times[[varName]])) {
+      positions <- match(times.write, infoJs$times[[varName]])
+      times.write <- infoJs$times[[varName]]
     }
   }
 
-  if(!is.null(infoJs$varmin[[varName]]) & !is.null(infoJs$varmax[[varName]])){
-    varmin = minFusion(min1=varmin, min2=infoJs$varmin[[varName]], positions=positions)
-    varmax = maxFusion(varmax, infoJs$varmax[[varName]], positions)
+  if (!is.null(infoJs$varmin[[varName]]) & !is.null(infoJs$varmax[[varName]])) {
+    varmin <- minFusion(min1 = varmin, min2 = infoJs$varmin[[varName]], positions = positions)
+    varmax <- maxFusion(varmax, infoJs$varmax[[varName]], positions)
   }
 
-  infoJs$varmin[[varName]] = varmin
-  infoJs$varmax[[varName]] = varmax
+  infoJs$varmin[[varName]] <- varmin
+  infoJs$varmax[[varName]] <- varmax
   infoJs$times[[varName]] <- times.write
 
   # estimate maximum zoom level
-  if(missing(maxzoom))
-  {
+  if (missing(maxzoom)) {
     # warp to mercator
     r.crs <- raster_3857(nc, epsg)
 
@@ -184,18 +187,33 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
   }
   infoJs$mapMaxZoom <- maxzoom
 
-  if(missing(zoom))
-  {
+  if (missing(zoom)) {
     # increase resolution 16 times (2^4)
     infoJs$levelCsv <- maxzoom + 3
-  }else{
+  } else {
     infoJs$levelCsv <- zoom + 4
   }
-  if(write){
+  if (write) {
     writeJs(folder, infoJs)
   }
 
-  if(!missing(file)){
+  lon_data <- ncvar_get(nc, lon_name)
+  infoJs$lonMin[[varName]] <- lon_data[1]
+  infoJs$lonMax[[varName]] <- lon_data[length(lon_data)]
+  infoJs$lonNum[[varName]] <- length(lon_data)
+  lat_data <- ncvar_get(nc, lat_name)
+  infoJs$latMin[[varName]] <- lat_data[1]
+  infoJs$latMax[[varName]] <- lat_data[length(lat_data)]
+  infoJs$latNum[[varName]] <- length(lat_data)
+  time_data <- ncvar_get(nc, time_name)
+  infoJs$timeMin[[varName]] <- time_data[1]
+  infoJs$timeMax[[varName]] <- time_data[length(time_data)]
+  infoJs$timeNum[[varName]] <- length(time_data)
+
+  infoJs$varType <- get_struct_typecode(nc$var[[1]]$prec)
+  infoJs$compressed <- if (is.na(nc$var[[1]]$compression)) "false" else "true"
+
+  if (!missing(file)) {
     # open nc
     nc_close(nc)
   }
@@ -207,8 +225,10 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
 #' @param name name
 #' @param value value
 #' @param type type
+#' @param digits digits
+#' @param value_array value_array
 #' @return None
-arrayRtojs <- function(name, value, type="character"){
+arrayRtojs <- function(name, value, type="character", digits=3, value_array=TRUE){
   times = ""
   t = names(value)[1]
   for (t in names(value)){
@@ -223,9 +243,13 @@ arrayRtojs <- function(name, value, type="character"){
       values <- as.Date(value[[t]])
     }else{
       sep <- ""
-      values <- round(value[[t]], digits=3)
+      values <- round(value[[t]], digits=digits)
     }
-    times <- paste0(times, "'", t, "'", ":" , " ", "[", sep, paste(values, collapse=paste0(sep, ",", sep)), sep, "]")
+    if (value_array) {
+      times <- paste0(times, "'", t, "': [", sep, paste(values, collapse=paste0(sep, ",", sep)), sep, "]")
+    } else {
+      times <- paste0(times, "'", t, "': ", sep, values[1], sep)
+    }
   }
   times.write <- paste0("var ", name, " = {", times, "};\n")
   return(times.write)
@@ -263,7 +287,7 @@ generaltojs <- function(name, value.ori){
   return(times.write)
 }
 
-#' 
+#'
 #' @param folder folder
 #' @param infoJs infoJs
 #' @param varNames varNames
@@ -275,21 +299,21 @@ generaltojs <- function(name, value.ori){
 #' @param extensionDownloadFile extensionDownloadFile
 #' @param title title
 #' @param showDonwloadCoordinates show CSV download menu and graph display
-#' @return text written in the file 
-writeJs <- function(folder, infoJs, varNames, varTitle, legendTitle, menuNames, generalInformation, generalInformationNames, extensionDownloadFile = "nc", title="Map web", showDonwloadCoordinates=TRUE){
-  file <-  file.path(folder, "times.js")
+#' @return text written in the file
+writeJs <- function(folder, infoJs, varNames, varTitle, legendTitle, menuNames, generalInformation, generalInformationNames, extensionDownloadFile = "nc", title = "Map web", showDonwloadCoordinates = TRUE, projection = "EPSG:3857") {
+  file <- file.path(folder, "times.js")
 
-  if(missing(varTitle)){
-    if(length(infoJs$varmin)>1){
-      varTitle = names(infoJs$varmin)
-      names(varTitle) = names(infoJs$varmin)
-    }else{
-      varTitle = names(infoJs$varmin)
+  if (missing(varTitle)) {
+    if (length(infoJs$varmin) > 1) {
+      varTitle <- names(infoJs$varmin)
+      names(varTitle) <- names(infoJs$varmin)
+    } else {
+      varTitle <- names(infoJs$varmin)
     }
   }
 
-  if(missing(varNames)){
-    # Ej. 
+  if (missing(varNames)) {
+    # Ej.
     # varNames = list("Temperature-based"=list("cd"=c("cd_month", "cd_season", "cd_year"), "gtx"=c("gtx_year"), "ptg"=c("ptg_year")), "Precipitation-based"=list("mfi"=c("mfi_year")), "Bioclimatic"=list("bio4" = c("bio4_year"), "bio5" = c("bio5_year")))
     # if(length(infoJs$varmin)>1){
     #   varNames = list("Menu1"=list("SubMenu1"=names(infoJs$varmin)[(1:length(names(infoJs$varmin))%%2)==0]), "Menu2"=list("SubMenu1"=names(infoJs$varmin)[(1:length(names(infoJs$varmin))%%2)!=0]))
@@ -297,15 +321,15 @@ writeJs <- function(folder, infoJs, varNames, varTitle, legendTitle, menuNames, 
     # }else{
     #   varNames = names(infoJs$varmin)
     # }
-    varNames = names(infoJs$varmin)
+    varNames <- names(infoJs$varmin)
   }
 
-  if(missing(menuNames)){
-    menuNames = varTitle
+  if (missing(menuNames)) {
+    menuNames <- varTitle
   }
 
-  if(missing(legendTitle)){
-    legendTitle = "Legend"
+  if (missing(legendTitle)) {
+    legendTitle <- "Legend"
   }
 
   text.js <- ""
@@ -314,47 +338,59 @@ writeJs <- function(folder, infoJs, varNames, varTitle, legendTitle, menuNames, 
 
   lat_lon.write <- paste0("var marginBounds = L.latLngBounds(L.latLng(", infoJs$latIni, ", ", infoJs$lonIni, "), L.latLng(", infoJs$latEnd, ", ", infoJs$lonEnd, "));\n")
   text.js <- paste(text.js, lat_lon.write)
- 
-  text.js <- paste(text.js, arrayRtojs(name="times", value=infoJs$times, type="date"))
+  text.js <- paste(text.js, arrayRtojs(name = "times", value = infoJs$times, type = "date"))
   text.js <- paste0(text.js, " var showDonwloadCoordinates = ", tolower(showDonwloadCoordinates), ";\n")
 
   # Niveles de zoom
   text.js <- paste(text.js, paste0("var mapMinZoom = ", infoJs$mapMinZoom, ";\n"))
   text.js <- paste(text.js, paste0("var mapMaxZoom = ", infoJs$mapMaxZoom, ";\n"))
   text.js <- paste(text.js, paste0("var legend = ", infoJs$legend, ";\n"))
-  text.js <- paste(text.js, arrayRtojs(name="varMin", value=infoJs$varmin, type="numeric"))
-  text.js <- paste(text.js, arrayRtojs(name="varMax", value=infoJs$varmax, type="numeric"))
+  text.js <- paste(text.js, arrayRtojs(name = "varMin", value = infoJs$varmin, type = "numeric"))
+  text.js <- paste(text.js, arrayRtojs(name = "varMax", value = infoJs$varmax, type = "numeric"))
   text.js <- paste(text.js, paste0("var levelcsv = ", infoJs$levelCsv, ";\n"))
-  
+
   text.js <- paste(text.js, paste0("var title = '", title, "';\n"))
-  if(class(varNames)!="character"){
-    text.js <- paste(text.js, listRtojs(name="varNames", value=varNames))
-  }else{
-    text.js <- paste(text.js, paste0("var varNames = ", "[", "'", paste(varNames, collapse="', '"), "'", "]", ";\n"))
+  if (class(varNames) != "character") {
+    text.js <- paste(text.js, listRtojs(name = "varNames", value = varNames))
+  } else {
+    text.js <- paste(text.js, paste0("var varNames = ", "[", "'", paste(varNames, collapse = "', '"), "'", "]", ";\n"))
   }
-  text.js <- paste(text.js, arrayRtojs(name="varTitle", value=varTitle))
+  text.js <- paste(text.js, arrayRtojs(name = "varTitle", value = varTitle))
   # if(class(legendTitle)=="list"){ # Fallaba cuando legendTitle era un array
-  if(length(legendTitle)>1){
-    text.js <- paste(text.js, arrayRtojs(name="legendTitle", value=legendTitle))
-  }else{
+  if (length(legendTitle) > 1) {
+    text.js <- paste(text.js, arrayRtojs(name = "legendTitle", value = legendTitle))
+  } else {
     text.js <- paste(text.js, paste0("var legendTitle = {NaN:['", legendTitle, "']};\n"))
   }
-  text.js <- paste(text.js, arrayRtojs(name="menuNames", value=menuNames)) 
+  text.js <- paste(text.js, arrayRtojs(name = "menuNames", value = menuNames))
   ####
-  if(!missing(generalInformation)){
-    text.js <- paste(text.js, generaltojs(name="generalInformation", value.ori=generalInformation))
-  }else{
+  if (!missing(generalInformation)) {
+    text.js <- paste(text.js, generaltojs(name = "generalInformation", value.ori = generalInformation))
+  } else {
     text.js <- paste(text.js, paste0("var generalInformation = ", "undefined", ";\n"))
-  }####
-  if(!missing(generalInformationNames)){
-    text.js <- paste(text.js, paste0("var generalInformationNames = ", "[", "'", paste(generalInformationNames, collapse="', '"), "'", "]", ";\n"))
-  }else{
+  } ####
+  if (!missing(generalInformationNames)) {
+    text.js <- paste(text.js, paste0("var generalInformationNames = ", "[", "'", paste(generalInformationNames, collapse = "', '"), "'", "]", ";\n"))
+  } else {
     text.js <- paste(text.js, paste0("var generalInformationNames = ", "undefined", ";\n"))
   }
   text.js <- paste(text.js, paste0("var extensionDownloadFile = '", extensionDownloadFile, "';\n"))
+  text.js <- paste(text.js, arrayRtojs(name = "lonMin", value = infoJs$lonMin, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "lonMax", value = infoJs$lonMax, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "lonNum", value = infoJs$lonNum, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "latMin", value = infoJs$latMin, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "latMax", value = infoJs$latMax, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "latNum", value = infoJs$latNum, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "timeMin", value = infoJs$timeMin, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "timeMax", value = infoJs$timeMax, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, arrayRtojs(name = "timeNum", value = infoJs$timeNum, type = "numeric", value_array = FALSE))
+  text.js <- paste(text.js, paste0("var varType = '", infoJs$varType, "';\n"))
+  text.js <- paste(text.js, paste0("var compressed = ", infoJs$compressed, ";\n"))
+  text.js <- paste(text.js, paste0("var offsetType='Q';\n"))
+  text.js <- paste(text.js, paste0("var sizeType='I';\n"))
+  text.js <- paste(text.js, paste0("var projection='", projection, "';\n"))
   text.js <- uglify_optimize(text.js)
 
-  write(text.js, file=file, append = FALSE)
+  write(text.js, file = file, append = FALSE)
   return(text.js)
 }
-

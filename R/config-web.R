@@ -389,7 +389,7 @@ writeJs <- function(folder, infoJs, varNames, varTitle, legendTitle, menuNames, 
   text.js <- paste(text.js, paste0("var offsetType = 'Q';\n"))
   text.js <- paste(text.js, paste0("var sizeType = 'I';\n"))
   text.js <- paste(text.js, paste0("var projection = '", projection, "';\n"))
-  #text.js <- uglify_optimize(text.js)
+  text.js <- uglify_optimize(text.js)
 
   write(text.js, file = file, append = FALSE)
   return(text.js)

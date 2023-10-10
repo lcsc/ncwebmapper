@@ -23,7 +23,10 @@ config_web(
   infoJs = NA,
   legend = "NaN",
   write = TRUE,
-  zoom
+  zoom,
+  lon_name = "lon",
+  lat_name = "lat",
+  time_name = "time"
 )
 }
 \arguments{
@@ -60,6 +63,12 @@ config_web(
 \item{write}{true si se escribe el fichero js al terminar la ejecución; implica que la web solo muestra un "mapa"; en otro caso se supone que la web tendrá más de un mapa}
 
 \item{zoom}{zoom}
+
+\item{lon_name}{lon_name}
+
+\item{lat_name}{lat_name}
+
+\item{time_name}{time_name}
 
 \item{maxZoom}{maxZoom}
 }

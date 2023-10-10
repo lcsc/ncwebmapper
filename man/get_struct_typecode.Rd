@@ -18,5 +18,5 @@ Converts the data type of a variable or dimension of a netCDF to the data type c
 by the struct library.
 }
 \examples{
-get_struct_typecode(nc_type="double")
+get_struct_typecode(nc_type = "double")
 }

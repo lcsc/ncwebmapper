@@ -19,5 +19,5 @@ write_nc_env(in_file, out_file, lon_name = "lon", lat_name = "lat")
 Create the JSON ncEnv with meta-information about the netCDF file.
 }
 \examples{
-write_nc_env(in_file="/path/ETo.nc", out_file="/path/ncEnv.js", lon_name = "lon", lat_name = "lat")
+write_nc_env(in_file = "/path/ETo.nc", out_file = "/path/ncEnv.js", lon_name = "lon", lat_name = "lat")
 }

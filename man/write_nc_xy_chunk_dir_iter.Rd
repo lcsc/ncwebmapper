@@ -17,5 +17,5 @@ Create the binary chunks directory for the nc oriented to the maps of each date
 using the new H5Dchunk_iter function (https://docs.hdfgroup.org/hdf5/v1_14/group___h5_d.html#title6).
 }
 \examples{
-write_nc_xy_chunk_dir_iter(in_file="/path/ETo-xy.nc", out_file="/path/ETo-xy.bin")
+write_nc_xy_chunk_dir_iter(in_file = "/path/ETo-xy.nc", out_file = "/path/ETo-xy.bin")
 }

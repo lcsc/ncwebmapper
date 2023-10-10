@@ -15,5 +15,5 @@ write_nc_xy_chunk_dir(in_file, out_file)
 Create the binary chunks directory for the nc oriented to the maps of each date.
 }
 \examples{
-write_nc_xy_chunk_dir(in_file="/path/ETo-xy.nc", out_file="/path/ETo-xy.bin")
+write_nc_xy_chunk_dir(in_file = "/path/ETo-xy.nc", out_file = "/path/ETo-xy.bin")
 }

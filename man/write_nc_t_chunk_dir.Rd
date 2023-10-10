@@ -15,5 +15,5 @@ write_nc_t_chunk_dir(in_file, out_file)
 Create the binary chunks directory for the nc oriented to the time series of each pixel.
 }
 \examples{
-write_nc_t_chunk_dir(in_file="/path/ETo-t.nc", out_file="/path/ETo-t.bin")
+write_nc_t_chunk_dir(in_file = "/path/ETo-t.nc", out_file = "/path/ETo-t.bin")
 }

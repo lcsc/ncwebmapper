@@ -20,5 +20,5 @@ New filename
 Filename generator for rechunked nc and chunk directories.
 }
 \examples{
-create_nc_name(file_name="ETo.nc", sufix="-t", ext=".bin")
+create_nc_name(file_name = "ETo.nc", sufix = "-t", ext = ".bin")
 }

@@ -300,6 +300,7 @@ generaltojs <- function(name, value.ori){
 #' @param title title
 #' @param showDonwloadCoordinates show CSV download menu and graph display
 #' @return text written in the file
+#' @export
 writeJs <- function(folder, infoJs, varNames, varTitle, legendTitle, menuNames, generalInformation, generalInformationNames, extensionDownloadFile = "nc", title = "Map web", showDonwloadCoordinates = TRUE, projection = "EPSG:3857") {
   file <- file.path(folder, "times.js")
 

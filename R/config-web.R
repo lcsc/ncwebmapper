@@ -193,9 +193,6 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
   } else {
     infoJs$levelCsv <- zoom + 4
   }
-  if (write) {
-    writeJs(folder, infoJs)
-  }
 
   lon_data <- ncvar_get(nc, lon_name)
   infoJs$lonMin[[varName]] <- lon_data[1]
@@ -212,6 +209,9 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
 
   infoJs$varType <- get_struct_typecode(nc$var[[1]]$prec)
   infoJs$compressed <- if (is.na(nc$var[[1]]$compression)) "false" else "true"
+  if (write) {
+    writeJs(folder, infoJs)
+  }
 
   if (!missing(file)) {
     # open nc

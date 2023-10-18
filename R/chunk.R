@@ -55,7 +55,7 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
   # Open the original netCDF file
   nc_in_file <- nc_open(in_file)
 
-  var_name <- nc_in_file$var[[1]]$name
+  var_name <- getVarName(nc_in_file)
 
   # Reads global attributes
   global_att <- ncatt_get(nc_in_file, 0)
@@ -162,7 +162,7 @@ write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon",
   # Open the original netCDF file
   nc_in_file <- nc_open(in_file)
 
-  var_name <- nc_in_file$var[[1]]$name
+  var_name <- getVarName(nc_in_file)
 
   # Reads global attributes
   global_att <- ncatt_get(nc_in_file, 0)
@@ -298,7 +298,7 @@ write_nc_env <- function(in_file, out_file, lon_name = "lon", lat_name = "lat") 
   nc_in_file <- nc_open(in_file)
 
   write("var ncEnv = {", out_file)
-  var_name <- nc_in_file$var[[1]]$name
+  var_name <- getVarName(nc_in_file)
   write(paste0("    \"var_name\": \"", var_name, "\","), out_file, append = TRUE)
   lon_data <- ncvar_get(nc_in_file, lon_name)
   lon_min <- lon_data[1]
@@ -321,9 +321,9 @@ write_nc_env <- function(in_file, out_file, lon_name = "lon", lat_name = "lat") 
   write(paste0("    \"time_max\": ", time_max, ","), out_file, append = TRUE)
   time_num <- length(time_data)
   write(paste0("    \"time_num\": ", time_num, ","), out_file, append = TRUE)
-  var_type <- get_struct_typecode(nc_in_file$var[[1]]$prec)
+  var_type <- get_struct_typecode(nc_in_file$var[[var_name]]$prec)
   write(paste0("    \"var_type\": \"", var_type, "\","), out_file, append = TRUE)
-  compressed <- if (is.na(nc_in_file$var[[1]]$compression)) "false" else "true"
+  compressed <- if (is.na(nc_in_file$var[[var_name]]$compression)) "false" else "true"
   write(paste0("    \"compressed\": ", compressed, ","), out_file, append = TRUE)
   offset_type <- "Q"
   write(paste0("    \"offset_type\": \"", offset_type, "\","), out_file, append = TRUE)
@@ -344,9 +344,8 @@ write_nc_env <- function(in_file, out_file, lon_name = "lon", lat_name = "lat") 
 #' @examples
 #' write_nc_t_chunk_dir(in_file = "/path/ETo-t.nc", out_file = "/path/ETo-t.bin")
 write_nc_t_chunk_dir <- function(in_file, out_file) {
-  # Find out name of main variable with ncdf4
   nc_in_file <- nc_open(in_file)
-  var_name <- nc_in_file$var[[1]]$name
+  var_name <- getVarName(nc_in_file)
   nc_close(nc_in_file)
 
   # Open the netCDF file with hdf5r
@@ -382,9 +381,8 @@ write_nc_t_chunk_dir <- function(in_file, out_file) {
 #' @examples
 #' write_nc_t_chunk_dir_iter(in_file = "/path/ETo-t.nc", out_file = "/path/ETo-t.bin")
 write_nc_t_chunk_dir_iter <- function(in_file, out_file) {
-  # Find out name of main variable with ncdf4
   nc_in_file <- nc_open(in_file)
-  var_name <- nc_in_file$var[[1]]$name
+  var_name <- getVarName(nc_in_file)
   nc_close(nc_in_file)
 
   # Open the netCDF file with hdf5r
@@ -419,9 +417,8 @@ write_nc_t_chunk_dir_iter <- function(in_file, out_file) {
 #' @examples
 #' write_nc_xy_chunk_dir(in_file = "/path/ETo-xy.nc", out_file = "/path/ETo-xy.bin")
 write_nc_xy_chunk_dir <- function(in_file, out_file) {
-  # Find out name of main variable with ncdf4
   nc_in_file <- nc_open(in_file)
-  var_name <- nc_in_file$var[[1]]$name
+  var_name <- getVarName(nc_in_file)
   nc_close(nc_in_file)
 
   # Open the netCDF file with hdf5r
@@ -451,9 +448,8 @@ write_nc_xy_chunk_dir <- function(in_file, out_file) {
 #' @examples
 #' write_nc_xy_chunk_dir_iter(in_file = "/path/ETo-xy.nc", out_file = "/path/ETo-xy.bin")
 write_nc_xy_chunk_dir_iter <- function(in_file, out_file) {
-  # Find out name of main variable with ncdf4
   nc_in_file <- nc_open(in_file)
-  var_name <- nc_in_file$var[[1]]$name
+  var_name <- getVarName(nc_in_file)
   nc_close(nc_in_file)
 
   # Open the netCDF file with hdf5r

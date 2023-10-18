@@ -211,8 +211,9 @@ readMinMax <- function(nc){
   times <- length(nc$dim[[timePosition(nc)]]$vals)
   minMax <- list(min=array(NA, dim=times), max=array(NA, dim=times))
   i <- 1
+  var_name <- getVarName(nc)
   for(i in 1:times){
-    data = ncvar_get(nc, nc$var[[1]]$name, c(1, 1, i), c(-1, -1, 1))
+    data = ncvar_get(nc, nc$var[[var_name]]$name, c(1, 1, i), c(-1, -1, 1))
     if(sum(!is.na(data))!=0){
       minMax$min[i] = min(data, na.rm = TRUE)
       minMax$max[i] = max(data, na.rm = TRUE)
@@ -267,3 +268,13 @@ timePosition <- function(nc){
   return(grep("time", tolower(names(nc$dim))))
 }
 
+
+#' Get var name of main variable in nc file
+#' @param nc open nc file
+#' @return var name
+#' @export
+getVarName <- function(nc) {
+  var_names <- names(nc$var)
+  var_name <- var_names[!var_names %in% c("crs")][1]
+  return(var_name)
+}

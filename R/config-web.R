@@ -71,12 +71,16 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
                    lonMin = list(), lonMax = list(), lonNum = list(),
                    latMin = list(), latMax = list(), latNum = list(),
                    timeMin = list(), timeMax = list(), timeNum = list(),
-                   varType = "f", compressed = TRUE)
+                   varType = "f", compressed = TRUE, fillValue = list())
   }
 
+  # CLARIFICATION!
+  # var_name is the name of the primary variable within the ncfile
+  # varName is the name of the nc file without the .nc extension
   if (!missing(file)) {
     # open nc
     nc <- nc_open(file)
+    var_name <- getVarName(nc)
   }
 
   if (missing(varName)) {
@@ -207,8 +211,14 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
   infoJs$timeMax[[varName]] <- time_data[length(time_data)]
   infoJs$timeNum[[varName]] <- length(time_data)
 
-  infoJs$varType <- get_struct_typecode(nc$var[[1]]$prec)
-  infoJs$compressed <- if (is.na(nc$var[[1]]$compression)) "false" else "true"
+  infoJs$varType <- get_struct_typecode(nc$var[[var_name]]$prec)
+  #infoJs$compressed <- if (is.na(nc$var[[var_name]]$compression)) "false" else "true"
+  infoJs$compressed <- "true"     # Se hardcodea a true dado que los ncs chunkeados tienen la compresión forzada
+
+  # Check if the missval attribute exists in the netCDF
+  var_atts <- ncatt_get(nc, varid = nc$var[[var_name]])
+  infoJs$fillValue[[varName]] <- if ("_FillValue" %in% names(var_atts)) nc$var[[var_name]]$missval else NaN
+
   if (write) {
     writeJs(folder, infoJs)
   }
@@ -230,7 +240,6 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
 #' @return None
 arrayRtojs <- function(name, value, type="character", digits=3, value_array=TRUE){
   times = ""
-  t = names(value)[1]
   for (t in names(value)){
     if(times!=""){
       times <- paste0(times, ", ") 
@@ -390,6 +399,8 @@ writeJs <- function(folder, infoJs, varNames, varTitle, legendTitle, menuNames, 
   text.js <- paste(text.js, paste0("var offsetType = 'Q';\n"))
   text.js <- paste(text.js, paste0("var sizeType = 'I';\n"))
   text.js <- paste(text.js, paste0("var projection = '", projection, "';\n"))
+  text.js <- paste(text.js, arrayRtojs(name = "fillValue", value = infoJs$fillValue, type = "numeric", value_array = FALSE))
+
   text.js <- uglify_optimize(text.js)
 
   write(text.js, file = file, append = FALSE)

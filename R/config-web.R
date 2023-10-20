@@ -217,7 +217,8 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
 
   # Check if the missval attribute exists in the netCDF
   var_atts <- ncatt_get(nc, varid = nc$var[[var_name]])
-  infoJs$fillValue[[varName]] <- if ("_FillValue" %in% names(var_atts)) nc$var[[var_name]]$missval else NaN
+  #infoJs$fillValue[[varName]] <- if ("_FillValue" %in% names(var_atts)) nc$var[[var_name]]$missval else NaN
+  infoJs$fillValue[[varName]] <- NaN    # Se hardcodea a NaN dado que los ncs chunkeados tienen el missval forzado a NaN
 
   if (write) {
     writeJs(folder, infoJs)

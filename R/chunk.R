@@ -121,6 +121,9 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
   # Final file creation
   nc_out_file <- nc_create(out_file, list(var), force_v4 = TRUE)
 
+  # TODO Mejorar la gestión del missval o FillValue sustituyendo durante el proceso de lectura/escritura
+  # todos los valores que coincidan con el missval por NaN.
+  # Ver tarea https://github.com/orgs/lcsc/projects/2/views/1?pane=issue&itemId=42139057
   if (lon_by == lon_num && lat_by == lat_num) {
     # Read/write data at once
     var_data <- ncvar_get(nc_in_file, var)

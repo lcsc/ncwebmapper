@@ -83,7 +83,8 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
   var_longname <- if (var_longname_att$hasatt) var_longname_att$value else NULL
   var_units_att <- ncatt_get(nc_in_file, var_name, "units")
   var_units <- if (var_units_att$hasatt) var_units_att$value else ""
-  var_missval <- nc_in_file$var[[var_name]]$missval
+  # On rechunked netCDFs we force missvall to NaN
+  var_missval <- NaN #nc_in_file$var[[var_name]]$missval
 
   # Reads the dimensions of the original file
   lon_data <- ncvar_get(nc_in_file, lon_name)
@@ -121,9 +122,6 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
   # Final file creation
   nc_out_file <- nc_create(out_file, list(var), force_v4 = TRUE)
 
-  # TODO Mejorar la gestión del missval o FillValue sustituyendo durante el proceso de lectura/escritura
-  # todos los valores que coincidan con el missval por NaN.
-  # Ver tarea https://github.com/orgs/lcsc/projects/2/views/1?pane=issue&itemId=42139057
   if (lon_by == lon_num && lat_by == lat_num) {
     # Read/write data at once
     var_data <- ncvar_get(nc_in_file, var)
@@ -193,7 +191,8 @@ write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon",
   var_longname <- if (var_longname_att$hasatt) var_longname_att$value else NULL
   var_units_att <- ncatt_get(nc_in_file, var_name, "units")
   var_units <- if (var_units_att$hasatt) var_units_att$value else ""
-  var_missval <- nc_in_file$var[[var_name]]$missval
+  # On rechunked netCDFs we force missvall to NaN
+  var_missval <- NaN #nc_in_file$var[[var_name]]$missval
 
   # Reads the dimensions of the original file
   lon_data <- ncvar_get(nc_in_file, lon_name)

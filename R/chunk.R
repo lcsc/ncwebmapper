@@ -32,9 +32,11 @@
 
 #' @import ncdf4
 #' @import hdf5r
+#' @import bit64
 
 library(ncdf4)
 library(hdf5r)
+library(bit64)
 
 # Constants
 OFFSET_TYPE_SIZE <- 8
@@ -364,7 +366,7 @@ write_nc_t_chunk_dir <- function(in_file, out_file) {
     for (x in seq(1, lon_num)) {
       chunk_info <- nc_in_file[[var_name]]$get_chunk_info_by_coord(c(0, y - 1, x - 1))
       # Write the number pairs to the binary file
-      writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+      writeBin(as.vector(as.integer64(chunk_info$addr)), bin_out_file, endian = "little")
       writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
     }
   }
@@ -402,7 +404,7 @@ write_nc_t_chunk_dir_iter <- function(in_file, out_file) {
     lon_index <- chunk_info$offset[[3]]
     dir_pos <- (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * (lon_index + lat_index * lon_num)
     seek(bin_out_file, dir_pos)
-    writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+    writeBin(as.vector(as.integer64(chunk_info$addr)), bin_out_file, endian = "little")
     writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
   })
 
@@ -429,10 +431,14 @@ write_nc_xy_chunk_dir <- function(in_file, out_file) {
   # Open a binary file in write mode
   bin_out_file <- file(out_file, "wb")
 
+  lon_num <- nc_in_file[[var_name]]$dims[[1]]
+  lat_num <- nc_in_file[[var_name]]$dims[[2]]
+  time_num <- nc_in_file[[var_name]]$dims[[3]]
+
   for (t in seq(1, time_num)) {
     chunk_info <- nc_in_file[[var_name]]$get_chunk_info_by_coord(c(t - 1, 0, 0))
     # Write the number pairs to the binary file
-    writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+    writeBin(as.vector(as.integer64(chunk_info$addr)), bin_out_file, endian = "little")
     writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
   }
 
@@ -464,7 +470,7 @@ write_nc_xy_chunk_dir_iter <- function(in_file, out_file) {
     time_index <- chunk_info$offset[[1]]
     dir_pos <- (OFFSET_TYPE_SIZE + SIZE_TYPE_SIZE) * time_index
     seek(bin_out_file, dir_pos)
-    writeBin(as.integer(chunk_info$addr), bin_out_file, size = OFFSET_TYPE_SIZE, endian = "little")
+    writeBin(as.vector(as.integer64(chunk_info$addr)), bin_out_file, endian = "little")
     writeBin(as.integer(chunk_info$size), bin_out_file, size = SIZE_TYPE_SIZE, endian = "little")
   })
 

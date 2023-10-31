@@ -208,20 +208,11 @@ read_coords <- function(nc, epsg){
 #' @param nc nc
 #' @return day min max
 readMinMax <- function(nc){
-  times <- length(nc$dim[[timePosition(nc)]]$vals)
-  minMax <- list(min=array(NA, dim=times), max=array(NA, dim=times))
-  i <- 1
   var_name <- getVarName(nc)
-  for(i in 1:times){
-    data = ncvar_get(nc, nc$var[[var_name]]$name, c(1, 1, i), c(-1, -1, 1))
-    if(sum(!is.na(data))!=0){
-      minMax$min[i] = min(data, na.rm = TRUE)
-      minMax$max[i] = max(data, na.rm = TRUE)
-    }else{
-      minMax$min[i] = 0
-      minMax$max[i] = 0
-    }
-  }
+  data <- ncvar_get(nc, nc$var[[var_name]]$name)
+  minMax <- list(min=apply(data, 3, min, na.rm = TRUE), max=apply(data, 3, max, na.rm = TRUE))
+  minMax$min[is.na(minMax$min)] <- 0
+  minMax$max[is.na(minMax$max)] <- 0
   return(minMax)
 }
 

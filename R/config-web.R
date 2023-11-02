@@ -62,7 +62,7 @@ library(raster)
 #' @param lat_name lat_name
 #' @param time_name time_name
 #' @export
-config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, lonIni, latEnd, lonEnd, timeIni, timeEnd, varmin, varmax, varName, infoJs = NA, legend = "NaN", write = TRUE, zoom, lon_name = "lon", lat_name = "lat", time_name = "time") {
+config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, lonIni, latEnd, lonEnd, timeIni, timeEnd, varmin, varmax, varName, infoJs = NA, legend = "NaN", write = TRUE, zoom, lon_name, lat_name, time_name = "time") {
   if (missing(infoJs) || sum(!is.na(infoJs)) == 0) {
     infoJs <- list(mapMinZoom = 2, mapMaxZoom = NA, legend = legend,
                    varMin = NA, varMax = NA, levelcsv = NA, times = list(),
@@ -103,6 +103,12 @@ config_web <- function(file, folder, maxzoom, epsg, dates, formatdates, latIni, 
   }
 
   dir.create(folder, showWarnings = FALSE, recursive = TRUE)
+
+  if (missing(lon_name) || missing(lat_name)) {
+    dimNames <- returnXYNames(nc)
+    lon_name <- dimNames$X
+    lat_name <- dimNames$Y
+  }
 
   # Márgenes del mapa
   if (missing(latIni) | missing(latEnd) | missing(lonIni) | missing(lonEnd)) {

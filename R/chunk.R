@@ -50,10 +50,11 @@ SIZE_TYPE_SIZE <- 4
 #' @param lat_by Number of pixels vertically that will be read as a block during the read/write loop. -1 to read all at once.
 #' @param lon_name Name of longitude dimension.
 #' @param lat_name Name of latitude dimension.
+#' @param signif Number of significant digits to keep in the data.
 #' @export
 #' @examples
 #' write_nc_chunk_t(in_file = "/path/ETo.nc", out_file = "/path/ETo-t.nc", lon_by = 100, lat_by = 100, lon_name = "lon", lat_name = "lat")
-write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_name = "lon", lat_name = "lat") {
+write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_name = "lon", lat_name = "lat", signif = 4) {
   # Open the original netCDF file
   nc_in_file <- nc_open(in_file)
 
@@ -126,7 +127,7 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
 
   if (lon_by == lon_num && lat_by == lat_num) {
     # Read/write data at once
-    var_data <- ncvar_get(nc_in_file, var)
+    var_data <- signif(ncvar_get(nc_in_file, var), signif)
     ncvar_put(nc_out_file, var, var_data)
   } else {
     # Read/write data in batches
@@ -136,7 +137,7 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
       for (y in seq(1, lat_num, by = lat_by)) {
         y_rest <- lat_num - y + 1
         y_count <- if (y_rest >= lat_by) lat_by else y_rest
-        var_data <- ncvar_get(nc_in_file, var, start = c(x, y, 1), count = c(x_count, y_count, time_num))
+        var_data <- signif(ncvar_get(nc_in_file, var, start = c(x, y, 1), count = c(x_count, y_count, time_num)), signif)
         ncvar_put(nc_out_file, var, var_data, start = c(x, y, 1), count = c(x_count, y_count, time_num))
       }
     }
@@ -158,10 +159,11 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
 #' @param time_by Number of dates that will be read as a block during the read/write loop. -1 to read all at once.
 #' @param lon_name Name of longitude dimension.
 #' @param lat_name Name of latitude dimension.
+#' @param signif Number of significant digits to keep in the data.
 #' @export
 #' @examples
 #' write_nc_chunk_xy(in_file = "/path/ETo.nc", out_file = "/path/ETo-xy.nc", time_by = 100, lon_name = "lon", lat_name = "lat")
-write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon", lat_name = "lat") {
+write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon", lat_name = "lat", signif = 4) {
   # Open the original netCDF file
   nc_in_file <- nc_open(in_file)
 
@@ -233,14 +235,14 @@ write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon",
 
   if (time_by == time_num) {
     # Read/write data at once
-    var_data <- ncvar_get(nc_in_file, var)
+    var_data <- signif(ncvar_get(nc_in_file, var), signif)
     ncvar_put(nc_out_file, var, var_data)
   } else {
     # Read/write data in batches
     for (t in seq(1, time_num, by = time_by)) {
       t_rest <- time_num - t + 1
       t_count <- if (t_rest >= time_by) time_by else t_rest
-      var_data <- ncvar_get(nc_in_file, var, start = c(1, 1, t), count = c(lon_num, lat_num, t_count))
+      var_data <- signif(ncvar_get(nc_in_file, var_name, start = c(1, 1, t), count = c(lon_num, lat_num, t_count)), signif)
       ncvar_put(nc_out_file, var, var_data, start = c(1, 1, t), count = c(lon_num, lat_num, t_count))
     }
   }

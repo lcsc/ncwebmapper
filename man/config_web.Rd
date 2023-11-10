@@ -24,8 +24,8 @@ config_web(
   legend = "NaN",
   write = TRUE,
   zoom,
-  lon_name = "lon",
-  lat_name = "lat",
+  lon_name,
+  lat_name,
   time_name = "time"
 )
 }

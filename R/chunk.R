@@ -509,7 +509,15 @@ fusion_pen_can <- function(can_filename,
                            pen_filename,
                            fusion_filename,
                            nc_chunk_num = 16,
-                           signif_digits = 4) {
+                           signif_digits) {
+  # Select signif function or pass
+  if (missing(signif_digits)) {
+    adjust_prec <- function(x) x
+  } else {
+    adjust_prec <- function(x) signif(x, signif_digits)
+  }
+
+  # Open the original netCDF files
   can <- nc_open(can_filename, write = TRUE)
   pen <- nc_open(pen_filename, write = TRUE)
 
@@ -518,8 +526,7 @@ fusion_pen_can <- function(can_filename,
   min_lat <- min(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
   max_lat <- max(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
 
-  # Define the scale_factor and add_offset attributes
-  scale_factor <- 1
+  # Define the add_offset attribute
   add_offset <- 0.0
 
   # Define dimensions
@@ -674,7 +681,7 @@ fusion_pen_can <- function(can_filename,
   pen_lat_start <- which(nc_lat_rounded == min(pen_lat_rounded))
 
   # Read all data for the Canary Islands from the existing file
-  var_data_can <- signif(ncvar_get(can, var_name), signif_digits)
+  var_data_can <- adjust_prec(ncvar_get(can, var_name))
 
   # Write all data for the Canary Islands to the new file
   ncvar_put(nc, var, var_data_can,
@@ -699,13 +706,11 @@ fusion_pen_can <- function(can_filename,
 
     if (chunk_count > 0) {
       # Read data for the current chunk from the existing file
-      var_data_pen_chunk <- signif(ncvar_get(pen, var_name,
+      var_data_pen_chunk <- adjust_prec(ncvar_get(pen, var_name,
         start = c(1, 1, start_time),
         count = c(
           dim(var_data_pen)[[1]],
-          dim(var_data_pen)[[2]], chunk_count
-        )
-      ), signif_digits)
+          dim(var_data_pen)[[2]], chunk_count)))
 
       # Write data for the current chunk to the new file
       ncvar_put(nc, var, var_data_pen_chunk,

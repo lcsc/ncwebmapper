@@ -518,16 +518,13 @@ fusion_pen_can <- function(can_filename,
   }
 
   # Open the original netCDF files
-  can <- nc_open(can_filename, write = TRUE)
-  pen <- nc_open(pen_filename, write = TRUE)
+  can <- nc_open(can_filename, write = FALSE)
+  pen <- nc_open(pen_filename, write = FALSE)
 
   min_lon <- min(ncvar_get(pen, "lon"), ncvar_get(can, "lon"))
   max_lon <- max(ncvar_get(pen, "lon"), ncvar_get(can, "lon"))
   min_lat <- min(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
   max_lat <- max(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
-
-  # Define the add_offset attribute
-  add_offset <- 0.0
 
   # Define dimensions
   grid_size <- 0.025
@@ -556,7 +553,7 @@ fusion_pen_can <- function(can_filename,
   time_longname_att <- ncatt_get(pen, "time", "long_name")
   time_longname <- if (time_longname_att$hasatt) time_longname_att$value else "time"
   time_units_att <- ncatt_get(pen, "time", "units")
-  time_units <- if (time_units_att$hasatt) time_units_att$value else "days since 1970-01-01"
+  time_units <- if (time_units_att$hasatt) time_units_att$value else "days since 1961-01-01"
   time_calendar_att <- ncatt_get(pen, "time", "calendar")
   time_calendar <- if (time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
   time_unlim <- pen$dim$time$unlim
@@ -585,7 +582,7 @@ fusion_pen_can <- function(can_filename,
   var_longname <- if (var_longname_att$hasatt) var_longname_att$value else NULL
   var_units_att <- ncatt_get(pen, var_name, "units")
   var_units <- if (var_units_att$hasatt) var_units_att$value else ""
-  # On rechunked netCDFs we force missvall to NaN
+  # On fusioned netCDF we force missvall to NaN
   var_missval <- NaN # pen$var[[var_name]]$missval
   args <- list(
     name = var_name, units = var_units, dim = list(dimLon, dimLat, dimTime),
@@ -720,9 +717,6 @@ fusion_pen_can <- function(can_filename,
       print(i)
     }
   }
-
-  # Add attributes to the variable
-  ncatt_put(nc, var_name, "add_offset", add_offset)
 
   # Close all the NetCDF files to save the changes
   nc_close(nc)

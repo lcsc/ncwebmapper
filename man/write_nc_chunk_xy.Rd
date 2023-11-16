@@ -10,7 +10,7 @@ write_nc_chunk_xy(
   time_by = -1,
   lon_name = "lon",
   lat_name = "lat",
-  signif = 4
+  signif_digits
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ write_nc_chunk_xy(
 
 \item{lat_name}{Name of latitude dimension.}
 
-\item{signif}{Number of significant digits to keep in the data.}
+\item{signif_digits}{Number of significant digits to keep in the data.}
 }
 \description{
 Create the new netCDF file with favorable chunk dimensions to obtain plans for each date.

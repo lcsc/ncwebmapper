@@ -50,11 +50,11 @@ SIZE_TYPE_SIZE <- 4
 #' @param lat_by Number of pixels vertically that will be read as a block during the read/write loop. -1 to read all at once.
 #' @param lon_name Name of longitude dimension.
 #' @param lat_name Name of latitude dimension.
-#' @param signif Number of significant digits to keep in the data.
+#' @param signif_digits Number of significant digits to keep in the data.
 #' @export
 #' @examples
 #' write_nc_chunk_t(in_file = "/path/ETo.nc", out_file = "/path/ETo-t.nc", lon_by = 100, lat_by = 100, lon_name = "lon", lat_name = "lat")
-write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_name = "lon", lat_name = "lat", signif = 4) {
+write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_name = "lon", lat_name = "lat", signif_digits) {
   # Open the original netCDF file
   nc_in_file <- nc_open(in_file)
 
@@ -125,9 +125,16 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
   # Final file creation
   nc_out_file <- nc_create(out_file, list(var), force_v4 = TRUE)
 
+  # Select signif function or pass
+  if (missing(signif_digits)) {
+    adjust_prec <- function(x) x
+  } else {
+    adjust_prec <- function(x) signif(x, signif_digits)
+  }
+
   if (lon_by == lon_num && lat_by == lat_num) {
     # Read/write data at once
-    var_data <- signif(ncvar_get(nc_in_file, var), signif)
+    var_data <- adjust_prec(ncvar_get(nc_in_file, var))
     ncvar_put(nc_out_file, var, var_data)
   } else {
     # Read/write data in batches
@@ -137,7 +144,7 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
       for (y in seq(1, lat_num, by = lat_by)) {
         y_rest <- lat_num - y + 1
         y_count <- if (y_rest >= lat_by) lat_by else y_rest
-        var_data <- signif(ncvar_get(nc_in_file, var, start = c(x, y, 1), count = c(x_count, y_count, time_num)), signif)
+        var_data <- adjust_prec(ncvar_get(nc_in_file, var, start = c(x, y, 1), count = c(x_count, y_count, time_num)))
         ncvar_put(nc_out_file, var, var_data, start = c(x, y, 1), count = c(x_count, y_count, time_num))
       }
     }
@@ -159,11 +166,11 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
 #' @param time_by Number of dates that will be read as a block during the read/write loop. -1 to read all at once.
 #' @param lon_name Name of longitude dimension.
 #' @param lat_name Name of latitude dimension.
-#' @param signif Number of significant digits to keep in the data.
+#' @param signif_digits Number of significant digits to keep in the data.
 #' @export
 #' @examples
 #' write_nc_chunk_xy(in_file = "/path/ETo.nc", out_file = "/path/ETo-xy.nc", time_by = 100, lon_name = "lon", lat_name = "lat")
-write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon", lat_name = "lat", signif = 4) {
+write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon", lat_name = "lat", signif_digits) {
   # Open the original netCDF file
   nc_in_file <- nc_open(in_file)
 
@@ -233,16 +240,23 @@ write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon",
   # Final file creation
   nc_out_file <- nc_create(out_file, list(var), force_v4 = TRUE)
 
+  # Select signif function or pass
+  if (missing(signif_digits)) {
+    adjust_prec <- function(x) x
+  } else {
+    adjust_prec <- function(x) signif(x, signif_digits)
+  }
+
   if (time_by == time_num) {
     # Read/write data at once
-    var_data <- signif(ncvar_get(nc_in_file, var), signif)
+    var_data <- adjust_prec(ncvar_get(nc_in_file, var))
     ncvar_put(nc_out_file, var, var_data)
   } else {
     # Read/write data in batches
     for (t in seq(1, time_num, by = time_by)) {
       t_rest <- time_num - t + 1
       t_count <- if (t_rest >= time_by) time_by else t_rest
-      var_data <- signif(ncvar_get(nc_in_file, var_name, start = c(1, 1, t), count = c(lon_num, lat_num, t_count)), signif)
+      var_data <- adjust_prec(ncvar_get(nc_in_file, var_name, start = c(1, 1, t), count = c(lon_num, lat_num, t_count)))
       ncvar_put(nc_out_file, var, var_data, start = c(1, 1, t), count = c(lon_num, lat_num, t_count))
     }
   }
@@ -479,6 +493,232 @@ write_nc_xy_chunk_dir_iter <- function(in_file, out_file) {
   # Close files
   close(bin_out_file)
   nc_in_file$close()
+}
+
+
+#' Union of peninsular and Canary Islands netCDF files.
+#' @param can_filename netCDF file with data for the Canary Islands.
+#' @param pen_filename netCDF file with data for the Iberian Peninsula.
+#' @param fusion_filename netCDF file with the union of the data from the two files.
+#' @param nc_chunk_num Number of chunks to use in the new netCDF file in each dimension.
+#' @param signif_digits Number of significant digits to keep in the data.
+#' @export
+#' @examples
+#' fusion_pen_can(can_filename = "/path/ETo_can.nc", pen_filename = "/path/ETo_pen.nc", fusion_filename = "/path/ETo_all.nc", nc_chunk_num = 16, signif_digits = 4)
+fusion_pen_can <- function(can_filename,
+                           pen_filename,
+                           fusion_filename,
+                           nc_chunk_num = 16,
+                           signif_digits = 4) {
+  can <- nc_open(can_filename, write = TRUE)
+  pen <- nc_open(pen_filename, write = TRUE)
+
+  min_lon <- min(ncvar_get(pen, "lon"), ncvar_get(can, "lon"))
+  max_lon <- max(ncvar_get(pen, "lon"), ncvar_get(can, "lon"))
+  min_lat <- min(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
+  max_lat <- max(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
+
+  nc_name <- fusion_filename
+  var_name <- "tmax"
+  longname <- "maximum temperature"
+  varunit <- "C"
+  # Define the scale_factor and add_offset attributes
+  scale_factor <- 1
+  add_offset <- 0.0
+
+  # Define dimensions
+  grid_size <- 0.025
+
+  # Define dimensions (modified to exclude the first row and column of pixels)
+  dimLon <- ncdf4::ncdim_def(
+    name = "lon",
+    units = "degrees_east",
+    vals = seq(min_lon,
+      max_lon,
+      by = grid_size
+    ),
+    longname = "longitude"
+  )
+
+  dimLat <- ncdf4::ncdim_def(
+    name = "lat",
+    units = "degrees_north",
+    vals = seq(min_lat,
+      max_lat,
+      by = grid_size
+    ),
+    longname = "latitude"
+  )
+
+  time_longname_att <- ncatt_get(pen, "time", "long_name")
+  time_longname <- if (time_longname_att$hasatt) time_longname_att$value else "time"
+  time_units_att <- ncatt_get(pen, "time", "units")
+  time_units <- if (time_units_att$hasatt) time_units_att$value else "days since 1970-01-01"
+  time_calendar_att <- ncatt_get(pen, "time", "calendar")
+  time_calendar <- if (time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
+  time_unlim <- pen$dim$time$unlim
+  time_data <- ncvar_get(pen, "time")
+  dimTime <- ncdf4::ncdim_def(
+    name = "time",
+    units = time_units,
+    vals = time_data,
+    unlim = time_unlim,
+    calendar = time_calendar,
+    longname = time_longname
+  )
+
+  # Define the CRS variable
+  varCRS <- ncdf4::ncvar_def(
+    name = "crs",
+    units = "",
+    dim = list(),
+    longname = "CRS definition",
+    prec = "integer"
+  )
+
+  # Define the variable
+  var <- ncdf4::ncvar_def(
+    name = var_name,
+    units = varunit,
+    dim = list(dimLon, dimLat, dimTime),
+    longname = longname,
+    prec = "float",
+    missval = NaN,
+    compression = 9,
+    chunksizes = c(
+      ceiling(dimLon$len / nc_chunk_num),
+      ceiling(dimLat$len / nc_chunk_num),
+      ceiling(dimTime$len / nc_chunk_num)
+    )
+  )
+
+  # Create a new netCDF file and add the variables
+  nc <- ncdf4::nc_create(nc_name, vars = list(var, varCRS), force_v4 = TRUE, verbose = TRUE)
+
+  # Link the variable to the projection variable using the
+  # grid_mapping attribute
+  ncdf4::ncatt_put(nc, var_name, "grid_mapping", "crs")
+
+  # CRS attributes
+  ncdf4::ncatt_put(nc, "crs", "grid_mapping_name", "latitude_longitude")
+  ncdf4::ncatt_put(nc, "crs", "longitude_of_prime_meridian", 0.0)
+  ncdf4::ncatt_put(nc, "crs", "semi_major_axis", 6378137.0)
+  ncdf4::ncatt_put(nc, "crs", "inverse_flattening", 298.257223563)
+  ncdf4::ncatt_put(nc, "crs", "crs_wkt", 'GEOGCRS["WGS 84", ENSEMBLE["World Geodetic System 1984 ensemble",
+                 MEMBER["World Geodetic System 1984 (Transit)"],
+                 MEMBER["World Geodetic System 1984 (G730)"],
+                 MEMBER["World Geodetic System 1984 (G873)"],
+                 MEMBER["World Geodetic System 1984 (G1150)"],
+                 MEMBER["World Geodetic System 1984 (G1674)"],
+                 MEMBER["World Geodetic System 1984 (G1762)"],
+                 MEMBER["World Geodetic System 1984 (G2139)"],
+                 ELLIPSOID["WGS 84",6378137,298.257223563,
+                           LENGTHUNIT["metre",1]],
+                 ENSEMBLEACCURACY[2.0]],
+        PRIMEM["Greenwich",0,
+               ANGLEUNIT["degree",0.0174532925199433]],
+        CS[ellipsoidal,2],
+        AXIS["geodetic latitude (Lat)",north,
+             ORDER[1],
+             ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["geodetic longitude (Lon)",east,
+             ORDER[2],
+             ANGLEUNIT["degree",0.0174532925199433]],
+        USAGE[
+          SCOPE["Horizontal component of 3D system."],
+          AREA["World."],
+          BBOX[-90,-180,90,180]],
+        ID["EPSG",4326]]')
+
+  # Add longitude attributes
+  ncdf4::ncatt_put(nc, "lon", "long_name", "longitude")
+  ncdf4::ncatt_put(nc, "lon", "standard_name", "longitude")
+  ncdf4::ncatt_put(nc, "lon", "axis", "X")
+  ncdf4::ncatt_put(nc, "lon", "comment", "Longitude geographical coordinates, WGS84 projection")
+  ncdf4::ncatt_put(nc, "lon", "reference_datum", "geographical coordinates, WGS84 projection")
+
+  # Add latitude attributes
+  ncdf4::ncatt_put(nc, "lat", "long_name", "latitude")
+  ncdf4::ncatt_put(nc, "lat", "standard_name", "latitude")
+  ncdf4::ncatt_put(nc, "lat", "axis", "Y")
+  ncdf4::ncatt_put(nc, "lat", "comment", "Latitude geographical coordinates, WGS84 projection")
+  ncdf4::ncatt_put(nc, "lat", "reference_datum", "geographical coordinates, WGS84 projection")
+
+  # Add time attributes
+  ncdf4::ncatt_put(nc, "time", "axis", "T")
+
+  # Add attributes
+  ncdf4::ncatt_put(nc, var_name, "standard_name", longname)
+
+  # Add global attributes
+  ncdf4::ncatt_put(nc, 0, "Conventions", "CF-1.8")
+
+  ######################################
+
+  # Round the longitude and latitude values to 4 decimal places
+  nc_lon_rounded <- round(ncvar_get(nc, "lon"), 4)
+  nc_lat_rounded <- round(ncvar_get(nc, "lat"), 4)
+  can_lon_rounded <- round(ncvar_get(can, "lon"), 4)
+  can_lat_rounded <- round(ncvar_get(can, "lat"), 4)
+  pen_lon_rounded <- round(ncvar_get(pen, "lon"), 4)
+  pen_lat_rounded <- round(ncvar_get(pen, "lat"), 4)
+
+  # Determine the corresponding extent in the new NetCDF file
+  can_lon_start <- which(nc_lon_rounded == min(can_lon_rounded))
+  can_lat_start <- which(nc_lat_rounded == min(can_lat_rounded))
+  pen_lon_start <- which(nc_lon_rounded == min(pen_lon_rounded))
+  pen_lat_start <- which(nc_lat_rounded == min(pen_lat_rounded))
+
+  # Read all data for the Canary Islands from the existing file
+  var_data_can <- signif(ncvar_get(can, var_name), signif_digits)
+
+  # Write all data for the Canary Islands to the new file
+  ncvar_put(nc, var, var_data_can,
+    start = c(can_lon_start, can_lat_start, 1),
+    count = dim(var_data_can)
+  )
+
+  # Read all data for the Iberian Peninsula from the existing file
+  var_data_pen <- ncvar_get(pen, var_name)
+
+  # Loop through time steps and write data
+  chunk_dates <- 2000 # Adjust this to an appropriate chunk size
+  num_time_steps <- dimTime$len
+  num_chunks <- ceiling(num_time_steps / chunk_dates)
+
+  for (i in 1:num_chunks) {
+    start_time <- (i - 1) * chunk_dates + 1
+    end_time <- min(i * chunk_dates, num_time_steps)
+
+    # Calculate the count for this chunk
+    chunk_count <- end_time - start_time + 1
+
+    if (chunk_count > 0) {
+      # Read data for the current chunk from the existing file
+      var_data_pen_chunk <- signif(ncvar_get(pen, var_name,
+        start = c(1, 1, start_time),
+        count = c(
+          dim(var_data_pen)[[1]],
+          dim(var_data_pen)[[2]], chunk_count
+        )
+      ), signif_digits)
+
+      # Write data for the current chunk to the new file
+      ncvar_put(nc, var, var_data_pen_chunk,
+        start = c(pen_lon_start, pen_lat_start, start_time),
+        count = dim(var_data_pen_chunk)
+      )
+      print(i)
+    }
+  }
+
+  # Add attributes to the variable
+  ncatt_put(nc, var_name, "add_offset", add_offset)
+
+  # Close all the NetCDF files to save the changes
+  nc_close(nc)
+  nc_close(can)
+  nc_close(pen)
 }
 
 

@@ -2,6 +2,7 @@
 
 export(config_web)
 export(create_nc_name)
+export(fusion_pen_can)
 export(getVarName)
 export(indecisNews)
 export(merge_csv)

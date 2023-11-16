@@ -87,7 +87,7 @@ write_nc_chunk_t <- function(in_file, out_file, lon_by = -1, lat_by = -1, lon_na
   var_units_att <- ncatt_get(nc_in_file, var_name, "units")
   var_units <- if (var_units_att$hasatt) var_units_att$value else ""
   # On rechunked netCDFs we force missvall to NaN
-  var_missval <- NaN #nc_in_file$var[[var_name]]$missval
+  var_missval <- NaN # nc_in_file$var[[var_name]]$missval
 
   # Reads the dimensions of the original file
   lon_data <- ncvar_get(nc_in_file, lon_name)
@@ -203,7 +203,7 @@ write_nc_chunk_xy <- function(in_file, out_file, time_by = -1, lon_name = "lon",
   var_units_att <- ncatt_get(nc_in_file, var_name, "units")
   var_units <- if (var_units_att$hasatt) var_units_att$value else ""
   # On rechunked netCDFs we force missvall to NaN
-  var_missval <- NaN #nc_in_file$var[[var_name]]$missval
+  var_missval <- NaN # nc_in_file$var[[var_name]]$missval
 
   # Reads the dimensions of the original file
   lon_data <- ncvar_get(nc_in_file, lon_name)
@@ -518,10 +518,6 @@ fusion_pen_can <- function(can_filename,
   min_lat <- min(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
   max_lat <- max(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
 
-  nc_name <- fusion_filename
-  var_name <- "tmax"
-  longname <- "maximum temperature"
-  varunit <- "C"
   # Define the scale_factor and add_offset attributes
   scale_factor <- 1
   add_offset <- 0.0
@@ -577,23 +573,31 @@ fusion_pen_can <- function(can_filename,
   )
 
   # Define the variable
-  var <- ncdf4::ncvar_def(
-    name = var_name,
-    units = varunit,
-    dim = list(dimLon, dimLat, dimTime),
-    longname = longname,
-    prec = "float",
-    missval = NaN,
-    compression = 9,
+  var_name <- getVarName(pen)
+  var_longname_att <- ncatt_get(pen, var_name, "long_name")
+  var_longname <- if (var_longname_att$hasatt) var_longname_att$value else NULL
+  var_units_att <- ncatt_get(pen, var_name, "units")
+  var_units <- if (var_units_att$hasatt) var_units_att$value else ""
+  # On rechunked netCDFs we force missvall to NaN
+  var_missval <- NaN # pen$var[[var_name]]$missval
+  args <- list(
+    name = var_name, units = var_units, dim = list(dimLon, dimLat, dimTime),
     chunksizes = c(
       ceiling(dimLon$len / nc_chunk_num),
       ceiling(dimLat$len / nc_chunk_num),
       ceiling(dimTime$len / nc_chunk_num)
-    )
+    ), prec = "float", compression = 9
   )
+  if (!is.null(var_longname)) {
+    args$longname <- var_longname
+  }
+  if (!is.null(var_missval)) {
+    args$missval <- var_missval
+  }
+  var <- do.call(ncvar_def, args)
 
   # Create a new netCDF file and add the variables
-  nc <- ncdf4::nc_create(nc_name, vars = list(var, varCRS), force_v4 = TRUE, verbose = TRUE)
+  nc <- ncdf4::nc_create(fusion_filename, vars = list(var, varCRS), force_v4 = TRUE, verbose = TRUE)
 
   # Link the variable to the projection variable using the
   # grid_mapping attribute
@@ -648,7 +652,7 @@ fusion_pen_can <- function(can_filename,
   ncdf4::ncatt_put(nc, "time", "axis", "T")
 
   # Add attributes
-  ncdf4::ncatt_put(nc, var_name, "standard_name", longname)
+  ncdf4::ncatt_put(nc, var_name, "standard_name", var_longname)
 
   # Add global attributes
   ncdf4::ncatt_put(nc, 0, "Conventions", "CF-1.8")

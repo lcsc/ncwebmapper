@@ -502,6 +502,7 @@ write_nc_xy_chunk_dir_iter <- function(in_file, out_file) {
 #' @param fusion_filename netCDF file with the union of the data from the two files.
 #' @param nc_chunk_num Number of chunks to use in the new netCDF file in each dimension.
 #' @param signif_digits Number of significant digits to keep in the data.
+#' @param chunk_dates Number of dates to iterate. # Adjust this to an appropriate chunk size
 #' @export
 #' @examples
 #' fusion_pen_can(can_filename = "/path/ETo_can.nc", pen_filename = "/path/ETo_pen.nc", fusion_filename = "/path/ETo_all.nc", nc_chunk_num = 16, signif_digits = 4)
@@ -509,7 +510,9 @@ fusion_pen_can <- function(can_filename,
                            pen_filename,
                            fusion_filename,
                            nc_chunk_num = 16,
-                           signif_digits) {
+                           signif_digits,
+                           chunk_dates = 2000 
+  ) {
   # Select signif function or pass
   if (missing(signif_digits)) {
     adjust_prec <- function(x) x
@@ -690,7 +693,6 @@ fusion_pen_can <- function(can_filename,
   var_data_pen <- ncvar_get(pen, var_name)
 
   # Loop through time steps and write data
-  chunk_dates <- 2000 # Adjust this to an appropriate chunk size
   num_time_steps <- dimTime$len
   num_chunks <- ceiling(num_time_steps / chunk_dates)
 

@@ -679,19 +679,21 @@ fusion_pen_can <- function(can_filename,
   can_lat_start <- which(nc_lat_rounded == min(can_lat_rounded))
   pen_lon_start <- which(nc_lon_rounded == min(pen_lon_rounded))
   pen_lat_start <- which(nc_lat_rounded == min(pen_lat_rounded))
-
+  print("Start of fusion")
   # Read all data for the Canary Islands from the existing file
   var_data_can <- adjust_prec(ncvar_get(can, var_name))
-
+  print("Canary read")
   # Write all data for the Canary Islands to the new file
   ncvar_put(nc, var, var_data_can,
     start = c(can_lon_start, can_lat_start, 1),
     count = dim(var_data_can)
   )
-
+  print("Canary written")
+  
   # Read all data for the Iberian Peninsula from the existing file
   var_data_pen <- ncvar_get(pen, var_name)
-
+  print("Peninsula read")
+  
   # Loop through time steps and write data
   num_time_steps <- dimTime$len
   num_chunks <- ceiling(num_time_steps / chunk_dates)

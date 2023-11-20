@@ -502,7 +502,9 @@ write_nc_xy_chunk_dir_iter <- function(in_file, out_file) {
 #' @param fusion_filename netCDF file with the union of the data from the two files.
 #' @param nc_chunk_num Number of chunks to use in the new netCDF file in each dimension.
 #' @param signif_digits Number of significant digits to keep in the data.
-#' @param chunk_dates Number of dates to iterate. # Adjust this to an appropriate chunk size
+#' @param lon_name Name of longitude dimension.
+#' @param lat_name Name of latitude dimension.
+#' @param time_name Name of time dimension.
 #' @export
 #' @examples
 #' fusion_pen_can(can_filename = "/path/ETo_can.nc", pen_filename = "/path/ETo_pen.nc", fusion_filename = "/path/ETo_all.nc", nc_chunk_num = 16, signif_digits = 4)
@@ -511,7 +513,9 @@ fusion_pen_can <- function(can_filename,
                            fusion_filename,
                            nc_chunk_num = 16,
                            signif_digits,
-                           chunk_dates = 2000 
+                           lon_name = "lon",
+                           lat_name = "lat",
+                           time_name = "time"
   ) {
   # Select signif function or pass
   if (missing(signif_digits)) {
@@ -524,17 +528,17 @@ fusion_pen_can <- function(can_filename,
   can <- nc_open(can_filename, write = FALSE)
   pen <- nc_open(pen_filename, write = FALSE)
 
-  min_lon <- min(ncvar_get(pen, "lon"), ncvar_get(can, "lon"))
-  max_lon <- max(ncvar_get(pen, "lon"), ncvar_get(can, "lon"))
-  min_lat <- min(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
-  max_lat <- max(ncvar_get(pen, "lat"), ncvar_get(can, "lat"))
+  min_lon <- min(ncvar_get(pen, lon_name), ncvar_get(can, lon_name))
+  max_lon <- max(ncvar_get(pen, lon_name), ncvar_get(can, lon_name))
+  min_lat <- min(ncvar_get(pen, lat_name), ncvar_get(can, lat_name))
+  max_lat <- max(ncvar_get(pen, lat_name), ncvar_get(can, lat_name))
 
   # Define dimensions
   grid_size <- 0.025
 
   # Define dimensions (modified to exclude the first row and column of pixels)
   dimLon <- ncdf4::ncdim_def(
-    name = "lon",
+    name = lon_name,
     units = "degrees_east",
     vals = seq(min_lon,
       max_lon,
@@ -544,7 +548,7 @@ fusion_pen_can <- function(can_filename,
   )
 
   dimLat <- ncdf4::ncdim_def(
-    name = "lat",
+    name = lat_name,
     units = "degrees_north",
     vals = seq(min_lat,
       max_lat,
@@ -553,16 +557,16 @@ fusion_pen_can <- function(can_filename,
     longname = "latitude"
   )
 
-  time_longname_att <- ncatt_get(pen, "time", "long_name")
+  time_longname_att <- ncatt_get(pen, time_name, "long_name")
   time_longname <- if (time_longname_att$hasatt) time_longname_att$value else "time"
-  time_units_att <- ncatt_get(pen, "time", "units")
+  time_units_att <- ncatt_get(pen, time_name, "units")
   time_units <- if (time_units_att$hasatt) time_units_att$value else "days since 1961-01-01"
-  time_calendar_att <- ncatt_get(pen, "time", "calendar")
+  time_calendar_att <- ncatt_get(pen, time_name, "calendar")
   time_calendar <- if (time_calendar_att$hasatt) time_calendar_att$value else "gregorian"
   time_unlim <- pen$dim$time$unlim
-  time_data <- ncvar_get(pen, "time")
+  time_data <- ncvar_get(pen, time_name)
   dimTime <- ncdf4::ncdim_def(
-    name = "time",
+    name = time_name,
     units = time_units,
     vals = time_data,
     unlim = time_unlim,
@@ -602,7 +606,7 @@ fusion_pen_can <- function(can_filename,
     args$missval <- var_missval
   }
   var <- do.call(ncvar_def, args)
-
+  chunk_dates <- ceiling(dimTime$len / nc_chunk_num)
   # Create a new netCDF file and add the variables
   nc <- ncdf4::nc_create(fusion_filename, vars = list(var, varCRS), force_v4 = TRUE, verbose = TRUE)
 
@@ -642,21 +646,21 @@ fusion_pen_can <- function(can_filename,
         ID["EPSG",4326]]')
 
   # Add longitude attributes
-  ncdf4::ncatt_put(nc, "lon", "long_name", "longitude")
-  ncdf4::ncatt_put(nc, "lon", "standard_name", "longitude")
-  ncdf4::ncatt_put(nc, "lon", "axis", "X")
-  ncdf4::ncatt_put(nc, "lon", "comment", "Longitude geographical coordinates, WGS84 projection")
-  ncdf4::ncatt_put(nc, "lon", "reference_datum", "geographical coordinates, WGS84 projection")
+  ncdf4::ncatt_put(nc, lon_name, "long_name", "longitude")
+  ncdf4::ncatt_put(nc, lon_name, "standard_name", "longitude")
+  ncdf4::ncatt_put(nc, lon_name, "axis", "X")
+  ncdf4::ncatt_put(nc, lon_name, "comment", "Longitude geographical coordinates, WGS84 projection")
+  ncdf4::ncatt_put(nc, lon_name, "reference_datum", "geographical coordinates, WGS84 projection")
 
   # Add latitude attributes
-  ncdf4::ncatt_put(nc, "lat", "long_name", "latitude")
-  ncdf4::ncatt_put(nc, "lat", "standard_name", "latitude")
-  ncdf4::ncatt_put(nc, "lat", "axis", "Y")
-  ncdf4::ncatt_put(nc, "lat", "comment", "Latitude geographical coordinates, WGS84 projection")
-  ncdf4::ncatt_put(nc, "lat", "reference_datum", "geographical coordinates, WGS84 projection")
+  ncdf4::ncatt_put(nc, lat_name, "long_name", "latitude")
+  ncdf4::ncatt_put(nc, lat_name, "standard_name", "latitude")
+  ncdf4::ncatt_put(nc, lat_name, "axis", "Y")
+  ncdf4::ncatt_put(nc, lat_name, "comment", "Latitude geographical coordinates, WGS84 projection")
+  ncdf4::ncatt_put(nc, lat_name, "reference_datum", "geographical coordinates, WGS84 projection")
 
   # Add time attributes
-  ncdf4::ncatt_put(nc, "time", "axis", "T")
+  ncdf4::ncatt_put(nc, time_name, "axis", "T")
 
   # Add attributes
   ncdf4::ncatt_put(nc, var_name, "standard_name", var_longname)
@@ -667,12 +671,12 @@ fusion_pen_can <- function(can_filename,
   ######################################
 
   # Round the longitude and latitude values to 4 decimal places
-  nc_lon_rounded <- round(ncvar_get(nc, "lon"), 4)
-  nc_lat_rounded <- round(ncvar_get(nc, "lat"), 4)
-  can_lon_rounded <- round(ncvar_get(can, "lon"), 4)
-  can_lat_rounded <- round(ncvar_get(can, "lat"), 4)
-  pen_lon_rounded <- round(ncvar_get(pen, "lon"), 4)
-  pen_lat_rounded <- round(ncvar_get(pen, "lat"), 4)
+  nc_lon_rounded <- round(ncvar_get(nc, lon_name), 4)
+  nc_lat_rounded <- round(ncvar_get(nc, lat_name), 4)
+  can_lon_rounded <- round(ncvar_get(can, lon_name), 4)
+  can_lat_rounded <- round(ncvar_get(can, lat_name), 4)
+  pen_lon_rounded <- round(ncvar_get(pen, lon_name), 4)
+  pen_lat_rounded <- round(ncvar_get(pen, lat_name), 4)
 
   # Determine the corresponding extent in the new NetCDF file
   can_lon_start <- which(nc_lon_rounded == min(can_lon_rounded))
@@ -681,8 +685,8 @@ fusion_pen_can <- function(can_filename,
   pen_lat_start <- which(nc_lat_rounded == min(pen_lat_rounded))
   print("Start of fusion")
   # Read all data for the Canary Islands from the existing file
-  var_data_can <- adjust_prec(ncvar_get(can, var_name))
   print("Canary read")
+  var_data_can <- adjust_prec(ncvar_get(can, var_name))
   # Write all data for the Canary Islands to the new file
   ncvar_put(nc, var, var_data_can,
     start = c(can_lon_start, can_lat_start, 1),
@@ -690,37 +694,25 @@ fusion_pen_can <- function(can_filename,
   )
   print("Canary written")
   
-  # Read all data for the Iberian Peninsula from the existing file
-  var_data_pen <- ncvar_get(pen, var_name)
+  # Read all data for the Iberian Peninsula from the existing file in batches
   print("Peninsula read")
-  
-  # Loop through time steps and write data
-  num_time_steps <- dimTime$len
-  num_chunks <- ceiling(num_time_steps / chunk_dates)
+  # Reads the dimensions of the original file
+  lon_data <- ncvar_get(pen, lon_name)
+  lat_data <- ncvar_get(pen, lat_name)
+  time_data <- ncvar_get(pen, time_name)
+  # Sizes of dimensions
+  lon_num <- length(lon_data)
+  lat_num <- length(lat_data)
+  time_num <- length(time_data)
 
-  for (i in 1:num_chunks) {
-    start_time <- (i - 1) * chunk_dates + 1
-    end_time <- min(i * chunk_dates, num_time_steps)
-
-    # Calculate the count for this chunk
-    chunk_count <- end_time - start_time + 1
-
-    if (chunk_count > 0) {
-      # Read data for the current chunk from the existing file
-      var_data_pen_chunk <- adjust_prec(ncvar_get(pen, var_name,
-        start = c(1, 1, start_time),
-        count = c(
-          dim(var_data_pen)[[1]],
-          dim(var_data_pen)[[2]], chunk_count)))
-
-      # Write data for the current chunk to the new file
-      ncvar_put(nc, var, var_data_pen_chunk,
-        start = c(pen_lon_start, pen_lat_start, start_time),
-        count = dim(var_data_pen_chunk)
-      )
-      print(i)
-    }
+  # Read/write data in batches
+  for (t in seq(1, time_num, by = chunk_dates)) {
+    t_rest <- time_num - t + 1
+    t_count <- if (t_rest >= chunk_dates) chunk_dates else t_rest
+    var_data <- adjust_prec(ncvar_get(pen, var_name, start = c(1, 1, t), count = c(lon_num, lat_num, t_count)))
+    ncvar_put(nc, var, var_data, start = c(pen_lon_start, pen_lat_start, t), count = dim(var_data))
   }
+  print("Peninsula written")
 
   # Close all the NetCDF files to save the changes
   nc_close(nc)

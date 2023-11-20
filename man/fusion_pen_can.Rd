@@ -9,7 +9,10 @@ fusion_pen_can(
   pen_filename,
   fusion_filename,
   nc_chunk_num = 16,
-  signif_digits = 4
+  signif_digits,
+  lon_name = "lon",
+  lat_name = "lat",
+  time_name = "time"
 )
 }
 \arguments{
@@ -22,6 +25,12 @@ fusion_pen_can(
 \item{nc_chunk_num}{Number of chunks to use in the new netCDF file in each dimension.}
 
 \item{signif_digits}{Number of significant digits to keep in the data.}
+
+\item{lon_name}{Name of longitude dimension.}
+
+\item{lat_name}{Name of latitude dimension.}
+
+\item{time_name}{Name of time dimension.}
 }
 \description{
 Union of peninsular and Canary Islands netCDF files.

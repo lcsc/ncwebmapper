@@ -596,7 +596,7 @@ fusion_pen_can <- function(can_filename,
   var_units_att <- ncatt_get(pen, var_name, "units")
   var_units <- if (var_units_att$hasatt) var_units_att$value else ""
   # On fusioned netCDF we force missvall to NaN
-  var_missval <- NaN # pen$var[[var_name]]$missval
+  var_missval <- NA # pen$var[[var_name]]$missval
   args <- list(
     name = var_name, units = var_units, dim = list(dimLon, dimLat, dimTime),
     chunksizes = c(chunk_lon, chunk_lat, chunk_time),

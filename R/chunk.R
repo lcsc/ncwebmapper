@@ -583,6 +583,12 @@ fusion_pen_can <- function(can_filename,
     prec = "integer"
   )
 
+  # Calc chunk sizes
+  chunk_lon <- ceiling(dimLon$len / nc_chunk_num)
+  chunk_lat <- ceiling(dimLat$len / nc_chunk_num)
+  if (nc_chunk_num > dimTime$len) nc_chunk_num <- 1
+  chunk_time <- ceiling(dimTime$len / nc_chunk_num)
+
   # Define the variable
   var_name <- getVarName(pen)
   var_longname_att <- ncatt_get(pen, var_name, "long_name")
@@ -593,11 +599,8 @@ fusion_pen_can <- function(can_filename,
   var_missval <- NaN # pen$var[[var_name]]$missval
   args <- list(
     name = var_name, units = var_units, dim = list(dimLon, dimLat, dimTime),
-    chunksizes = c(
-      ceiling(dimLon$len / nc_chunk_num),
-      ceiling(dimLat$len / nc_chunk_num),
-      ceiling(dimTime$len / nc_chunk_num)
-    ), prec = "float", compression = 9
+    chunksizes = c(chunk_lon, chunk_lat, chunk_time),
+    prec = "float", compression = 9
   )
   if (!is.null(var_longname)) {
     args$longname <- var_longname
@@ -606,7 +609,6 @@ fusion_pen_can <- function(can_filename,
     args$missval <- var_missval
   }
   var <- do.call(ncvar_def, args)
-  chunk_dates <- ceiling(dimTime$len / nc_chunk_num)
   # Create a new netCDF file and add the variables
   nc <- ncdf4::nc_create(fusion_filename, vars = list(var, varCRS), force_v4 = TRUE, verbose = TRUE)
 
@@ -706,9 +708,9 @@ fusion_pen_can <- function(can_filename,
   time_num <- length(time_data)
 
   # Read/write data in batches
-  for (t in seq(1, time_num, by = chunk_dates)) {
+  for (t in seq(1, time_num, by = chunk_time)) {
     t_rest <- time_num - t + 1
-    t_count <- if (t_rest >= chunk_dates) chunk_dates else t_rest
+    t_count <- if (t_rest >= chunk_time) chunk_time else t_rest
     var_data <- adjust_prec(ncvar_get(pen, var_name, start = c(1, 1, t), count = c(lon_num, lat_num, t_count)))
     ncvar_put(nc, var, var_data, start = c(pen_lon_start, pen_lat_start, t), count = dim(var_data))
   }

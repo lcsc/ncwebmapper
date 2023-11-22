@@ -505,6 +505,7 @@ write_nc_xy_chunk_dir_iter <- function(in_file, out_file) {
 #' @param lon_name Name of longitude dimension.
 #' @param lat_name Name of latitude dimension.
 #' @param time_name Name of time dimension.
+#' @param grid_size Size of the grid in degrees.
 #' @export
 #' @examples
 #' fusion_pen_can(can_filename = "/path/ETo_can.nc", pen_filename = "/path/ETo_pen.nc", fusion_filename = "/path/ETo_all.nc", nc_chunk_num = 16, signif_digits = 4)
@@ -515,7 +516,8 @@ fusion_pen_can <- function(can_filename,
                            signif_digits,
                            lon_name = "lon",
                            lat_name = "lat",
-                           time_name = "time"
+                           time_name = "time",
+                           grid_size
   ) {
   # Select signif function or pass
   if (missing(signif_digits)) {
@@ -534,7 +536,9 @@ fusion_pen_can <- function(can_filename,
   max_lat <- max(ncvar_get(pen, lat_name), ncvar_get(can, lat_name))
 
   # Define dimensions
-  grid_size <- 0.025
+  if (missing(grid_size)) {
+    grid_size <- min(abs(diff(ncvar_get(pen, lon_name))), abs(diff(ncvar_get(pen, lat_name))))
+  }
 
   # Define dimensions (modified to exclude the first row and column of pixels)
   dimLon <- ncdf4::ncdim_def(

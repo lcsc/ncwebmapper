@@ -12,7 +12,8 @@ fusion_pen_can(
   signif_digits,
   lon_name = "lon",
   lat_name = "lat",
-  time_name = "time"
+  time_name = "time",
+  grid_size
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ fusion_pen_can(
 \item{lat_name}{Name of latitude dimension.}
 
 \item{time_name}{Name of time dimension.}
+
+\item{grid_size}{Size of the grid in degrees.}
 }
 \description{
 Union of peninsular and Canary Islands netCDF files.

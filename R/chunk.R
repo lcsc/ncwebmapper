@@ -693,6 +693,9 @@ fusion_pen_can <- function(can_filename,
   # Read all data for the Canary Islands from the existing file
   print("Canary read")
   var_data_can <- adjust_prec(ncvar_get(can, var_name))
+  if (length(dim(var_data_can)) == 2) {
+    var_data_can <- array(var_data_can, dim = c(dim(var_data_can)[1], dim(var_data_can)[2], 1))
+  }
   # Write all data for the Canary Islands to the new file
   ncvar_put(nc, var, var_data_can,
     start = c(can_lon_start, can_lat_start, 1),
@@ -716,6 +719,9 @@ fusion_pen_can <- function(can_filename,
     t_rest <- time_num - t + 1
     t_count <- if (t_rest >= chunk_time) chunk_time else t_rest
     var_data <- adjust_prec(ncvar_get(pen, var_name, start = c(1, 1, t), count = c(lon_num, lat_num, t_count)))
+    if (length(dim(var_data)) == 2) {
+      var_data <- array(var_data, dim = c(dim(var_data)[1], dim(var_data)[2], 1))
+    }
     ncvar_put(nc, var, var_data, start = c(pen_lon_start, pen_lat_start, t), count = dim(var_data))
   }
   print("Peninsula written")
